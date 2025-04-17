@@ -48,14 +48,6 @@ fun Greeting(name: String, modifier: Modifier = Modifier) {
     )
 }
 
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    ApzTheme {
-        Greeting("Android")
-    }
-}
-
 @Composable
 fun SensorItem(name: String, city: String, recentMeasurements: Int) {
     val currentFontSize = LocalTextStyle.current.fontSize.value
