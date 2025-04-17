@@ -1,5 +1,6 @@
 package com.rdev.nure.apz.components
 
+import androidx.compose.foundation.gestures.TargetedFlingBehavior
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -7,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
+import androidx.compose.material3.carousel.CarouselDefaults
 import androidx.compose.material3.carousel.HorizontalUncontainedCarousel
 import androidx.compose.material3.carousel.rememberCarouselState
 import androidx.compose.runtime.Composable
@@ -25,11 +27,12 @@ import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
+// TODO: move to separate file
 data class WeatherForecast(
-    val temperature: Long,
+    val temperature: Int,
 )
 
-val dateFmt: DateFormat = SimpleDateFormat.getDateInstance()
+private val dateFmt: DateFormat = SimpleDateFormat.getDateInstance()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -48,6 +51,7 @@ fun WeatherForecastCarousel(today: WeatherForecast, tomorrow: WeatherForecast) {
             HorizontalUncontainedCarousel(
                 state = carouselState,
                 itemWidth = size,
+                flingBehavior = CarouselDefaults.singleAdvanceFlingBehavior(carouselState)
             ) { index ->
                 val forecast = forecastDays[index]
                 Column(
@@ -58,7 +62,7 @@ fun WeatherForecastCarousel(today: WeatherForecast, tomorrow: WeatherForecast) {
                     calendar.add(Calendar.DATE, index)
 
                     Text(
-                        text = "${forecast.temperature}",
+                        text = "${forecast.temperature} °C",
                         fontSize = 28.sp,
                     )
                     Text(
