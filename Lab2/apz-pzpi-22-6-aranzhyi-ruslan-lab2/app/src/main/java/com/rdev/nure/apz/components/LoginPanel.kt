@@ -22,6 +22,7 @@ import com.rdev.nure.apz.ui.theme.ApzTheme
 fun LoginPanel(
     email: String? = null,
     onLogin: (String, String) -> Unit,
+    disabled: Boolean = false,
 ) {
     var emailText by remember { mutableStateOf(email ?: "") }
     var passwordText by remember { mutableStateOf("") }
@@ -36,15 +37,18 @@ fun LoginPanel(
         CustomEmailField(
             value = emailText,
             onValueChange = { emailText = it },
+            disabled = disabled,
         )
         CustomPasswordField(
             value = passwordText,
             onValueChange = { passwordText = it },
+            disabled = disabled,
         )
 
         Button(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(25),
+            enabled = !disabled,
             onClick = {
                 onLogin(emailText, passwordText)
             },

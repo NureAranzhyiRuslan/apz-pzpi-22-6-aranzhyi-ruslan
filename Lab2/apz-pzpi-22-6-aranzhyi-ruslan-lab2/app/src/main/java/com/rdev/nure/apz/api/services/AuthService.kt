@@ -20,7 +20,7 @@ interface AuthService {
     ): Response<AuthResponse>
 
     @POST("/auth/logout")
-    suspend fun login(
+    suspend fun logout(
         @Header("Authorization") authToken: String,
     ): Response<Void>
 }

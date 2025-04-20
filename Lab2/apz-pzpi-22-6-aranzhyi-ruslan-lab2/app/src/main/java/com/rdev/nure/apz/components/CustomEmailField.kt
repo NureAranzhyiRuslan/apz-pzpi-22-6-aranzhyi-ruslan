@@ -12,6 +12,7 @@ import androidx.compose.ui.text.input.KeyboardType
 fun CustomEmailField(
     value: String,
     onValueChange: (String) -> Unit,
+    disabled: Boolean = false,
 ) {
     OutlinedTextField(
         value = value,
@@ -22,5 +23,6 @@ fun CustomEmailField(
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         modifier = Modifier.fillMaxWidth(),
+        enabled = !disabled,
     )
 }

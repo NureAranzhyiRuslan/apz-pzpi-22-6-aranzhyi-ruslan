@@ -25,18 +25,21 @@ enum class AuthPanelState {
 @Composable
 fun AuthPanel(
     onLogin: (String, String) -> Unit,
-    onRegister: (String, String) -> Unit,
+    onRegister: (String, String, String, String) -> Unit,
+    modifier: Modifier = Modifier,
     initialState: AuthPanelState = AuthPanelState.LOGIN,
+    disabled: Boolean = false,
 ) {
     var panel by remember { mutableStateOf(initialState) }
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         if(panel == AuthPanelState.LOGIN) {
             LoginPanel(
                 onLogin = onLogin,
+                disabled = disabled,
             )
             Text(
                 text = "Register instead",
@@ -46,6 +49,7 @@ fun AuthPanel(
         } else {
             RegisterPanel(
                 onRegister = onRegister,
+                disabled = disabled,
             )
             Text(
                 text = "Login instead",
@@ -62,7 +66,7 @@ fun AuthPanelPreview() {
     ApzTheme {
         AuthPanel(
             onLogin = { _, _ -> run {} },
-            onRegister = { _, _ -> run {} },
+            onRegister = { _, _, _, _ -> run {} },
             initialState = AuthPanelState.REGISTER,
         )
     }

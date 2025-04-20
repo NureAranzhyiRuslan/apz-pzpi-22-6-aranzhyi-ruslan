@@ -6,7 +6,7 @@ data class RegisterRequest(
     val email: String,
     val password: String,
     @JsonProperty("first_name")
-    val firstName: Long,
+    val firstName: String,
     @JsonProperty("last_name")
-    val lastName: Long,
+    val lastName: String,
 )

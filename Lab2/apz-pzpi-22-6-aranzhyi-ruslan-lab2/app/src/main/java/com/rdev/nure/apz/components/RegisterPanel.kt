@@ -22,13 +22,16 @@ import com.rdev.nure.apz.ui.theme.ApzTheme
 
 @Composable
 fun RegisterPanel(
-    onRegister: (String, String) -> Unit,
+    onRegister: (String, String, String, String) -> Unit,
+    disabled: Boolean = false,
 ) {
     val context = LocalContext.current
 
     var emailText by remember { mutableStateOf("") }
     var passwordText by remember { mutableStateOf("") }
     var passwordRepeatText by remember { mutableStateOf("") }
+    var firstNameText by remember { mutableStateOf("") }
+    var lastNameText by remember { mutableStateOf("") }
 
     Column(
         modifier = Modifier
@@ -37,29 +40,48 @@ fun RegisterPanel(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp)
     ) {
+        CustomTextField(
+            value = firstNameText,
+            onValueChange = { firstNameText = it },
+            labelText = "First name",
+            disabled = disabled,
+            outlined = true,
+        )
+        CustomTextField(
+            value = lastNameText,
+            onValueChange = { lastNameText = it },
+            labelText = "Last name",
+            disabled = disabled,
+            outlined = true,
+        )
+
         CustomEmailField(
             value = emailText,
             onValueChange = { emailText = it },
+            disabled = disabled,
         )
         CustomPasswordField(
             value = passwordText,
             onValueChange = { passwordText = it },
+            disabled = disabled,
         )
         CustomPasswordField(
             value = passwordRepeatText,
             onValueChange = { passwordRepeatText = it },
             labelText = "Repeat password",
+            disabled = disabled,
         )
 
         Button(
             modifier = Modifier.fillMaxWidth(),
             shape = RoundedCornerShape(25),
+            enabled = !disabled,
             onClick = {
                 if(passwordText != passwordRepeatText) {
                     Toast.makeText(context, "Passwords do not match!", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
-                onRegister(emailText, passwordText)
+                onRegister(emailText, passwordText, firstNameText, lastNameText)
             },
         ) {
             Text(
@@ -73,6 +95,6 @@ fun RegisterPanel(
 @Composable
 fun RegisterPanelPreview() {
     ApzTheme {
-        RegisterPanel(onRegister = { _, _ -> run {} })
+        RegisterPanel(onRegister = { _, _, _, _ -> run {} })
     }
 }

@@ -14,6 +14,7 @@ fun CustomPasswordField(
     value: String,
     onValueChange: (String) -> Unit,
     labelText: String = "Password",
+    disabled: Boolean = false,
 ) {
     OutlinedTextField(
         value = value,
@@ -25,5 +26,6 @@ fun CustomPasswordField(
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
         modifier = Modifier.fillMaxWidth(),
+        enabled = !disabled,
     )
 }
