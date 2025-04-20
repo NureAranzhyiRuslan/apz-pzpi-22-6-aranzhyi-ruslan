@@ -6,7 +6,7 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 
 interface ForecastService {
-    @GET("/forecast")
+    @GET("/forecast/city")
     suspend fun getForecastForCity(
         @Query("city") cityId: Long,
     ): Response<Forecast>

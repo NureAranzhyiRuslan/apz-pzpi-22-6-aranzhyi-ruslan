@@ -26,18 +26,12 @@ import java.text.DateFormat
 import java.text.SimpleDateFormat
 import java.util.Calendar
 
-// TODO: move to separate file
-data class WeatherForecast(
-    val temperature: Int,
-)
-
 private val dateFmt: DateFormat = SimpleDateFormat.getDateInstance()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WeatherForecastCarousel(today: WeatherForecast, tomorrow: WeatherForecast) {
-    val forecastDays = listOf(today, tomorrow)
-    val carouselState = rememberCarouselState { forecastDays.size }
+fun WeatherForecastCarousel(vararg temps : Int?) {
+    val carouselState = rememberCarouselState { temps.size }
     var size by remember { mutableStateOf(0.dp) }
 
     Column {
@@ -52,7 +46,8 @@ fun WeatherForecastCarousel(today: WeatherForecast, tomorrow: WeatherForecast) {
                 itemWidth = size,
                 flingBehavior = CarouselDefaults.singleAdvanceFlingBehavior(carouselState)
             ) { index ->
-                val forecast = forecastDays[index]
+                val forecastTemp = temps[index]?.toString() ?: "?"
+
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -61,7 +56,7 @@ fun WeatherForecastCarousel(today: WeatherForecast, tomorrow: WeatherForecast) {
                     calendar.add(Calendar.DATE, index)
 
                     Text(
-                        text = "${forecast.temperature} °C",
+                        text = "$forecastTemp °C",
                         fontSize = 28.sp,
                     )
                     Text(
@@ -79,9 +74,6 @@ fun WeatherForecastCarousel(today: WeatherForecast, tomorrow: WeatherForecast) {
 @Composable
 fun WeatherForecastCarouselPreview() {
     ApzTheme {
-        WeatherForecastCarousel(
-            today = WeatherForecast(15),
-            tomorrow = WeatherForecast(20),
-        )
+        WeatherForecastCarousel(15, 20)
     }
 }

@@ -1,16 +1,12 @@
 package com.rdev.nure.apz
 
-import android.app.Activity
 import android.content.Context
-import android.content.ContextWrapper
 import android.content.Intent
-import android.content.SharedPreferences
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -22,18 +18,17 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.ContextCompat.startActivity
+import androidx.core.content.edit
 import com.rdev.nure.apz.api.getApiClient
 import com.rdev.nure.apz.api.handleResponse
 import com.rdev.nure.apz.api.requests.LoginRequest
+import com.rdev.nure.apz.api.requests.RegisterRequest
 import com.rdev.nure.apz.api.responses.AuthResponse
 import com.rdev.nure.apz.api.services.AuthService
 import com.rdev.nure.apz.components.AuthPanel
 import com.rdev.nure.apz.ui.theme.ApzTheme
-import kotlinx.coroutines.launch
-import androidx.core.content.edit
-import com.rdev.nure.apz.api.requests.RegisterRequest
 import com.rdev.nure.apz.util.getActivity
+import kotlinx.coroutines.launch
 
 private val authApi: AuthService = getApiClient().create(AuthService::class.java)
 
@@ -54,9 +49,13 @@ fun AuthActivityComponent() {
     val coroutineScope = rememberCoroutineScope()
     var loading by remember { mutableStateOf(false) }
 
-    fun handleSuccessAuth(resp: AuthResponse) {
+    fun handleSuccessAuth(resp: AuthResponse, email: String) {
         val prefs = context.getSharedPreferences("apz", Context.MODE_PRIVATE)
-        prefs.edit { putString("authToken", resp.token).putLong("expiresAt", resp.expiresAt) }
+        prefs.edit {
+            putString("authToken", resp.token)
+                .putLong("expiresAt", resp.expiresAt)
+                .putString("lastEmail", email)
+        }
         context.startActivity(Intent(context, MainActivity::class.java))
         context.getActivity()!!.finish()
     }
@@ -71,7 +70,7 @@ fun AuthActivityComponent() {
 
         coroutineScope.launch {
             handleResponse(
-                successResponse = ::handleSuccessAuth,
+                successResponse = { handleSuccessAuth(it, email) },
                 errorResponse = { handleError(it.errors[0]) },
                 onHttpError = { handleError("Unknown error!") },
                 onNetworkError = { handleError("Network error!\nCheck your connection!") },
@@ -86,7 +85,7 @@ fun AuthActivityComponent() {
 
         coroutineScope.launch {
             handleResponse(
-                successResponse = ::handleSuccessAuth,
+                successResponse = { handleSuccessAuth(it, email) },
                 errorResponse = { handleError(it.errors[0]) },
                 onHttpError = { handleError("Unknown error!") },
                 onNetworkError = { handleError("Network error!\nCheck your connection!") },

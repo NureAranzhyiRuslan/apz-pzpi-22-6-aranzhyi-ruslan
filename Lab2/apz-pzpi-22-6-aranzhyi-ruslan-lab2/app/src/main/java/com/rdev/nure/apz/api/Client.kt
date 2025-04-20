@@ -44,12 +44,18 @@ suspend fun <T> handleResponse(
     errorResponse: (err: ErrorResponse) -> Unit,
     onHttpError: () -> Unit,
     onNetworkError: () -> Unit,
+    on401Error: (() -> Unit)? = null,
     body: suspend () -> Response<T>,
 ): Boolean {
     try {
         val resp = body()
         val respBody = resp.body()
         if(respBody == null) {
+            if(resp.code() == 401 && on401Error != null) {
+                on401Error()
+                return false
+            }
+
             val errResp = resp.getErrorResponse()?.let {
                 if(it.errors.isEmpty())
                     ErrorResponse(listOf("Unknown error"))
@@ -62,6 +68,8 @@ suspend fun <T> handleResponse(
             errorResponse(errResp)
             return false
         }
+
+        Log.d("ApiClient", "Response: $respBody")
 
         successResponse(respBody)
         return true
