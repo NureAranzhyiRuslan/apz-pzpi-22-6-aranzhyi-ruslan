@@ -1,6 +1,8 @@
 package com.rdev.nure.apz.components
 
+import android.content.Intent
 import android.content.Context
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,7 +24,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rdev.nure.apz.SensorInfoActivity
 import com.rdev.nure.apz.api.entities.Sensor
+import com.rdev.nure.apz.api.entities.City
 import com.rdev.nure.apz.api.getApiClient
 import com.rdev.nure.apz.api.handleResponse
 import com.rdev.nure.apz.api.services.MeasurementService
@@ -32,24 +36,30 @@ import kotlinx.coroutines.launch
 private val measurementsApi: MeasurementService = getApiClient().create(MeasurementService::class.java)
 
 @Composable
-fun SensorItem(name: String, city: String, recentMeasurements: Int?) {
+fun SensorItem(sensor: Sensor, recentMeasurements: Int?) {
+    val context = LocalContext.current
     val currentFontSize = LocalTextStyle.current.fontSize.value
 
     Row(
         modifier = Modifier
             .padding(4.dp)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .clickable {
+                val intent = Intent(context, SensorInfoActivity::class.java)
+                intent.putExtra("sensor", sensor)
+                context.startActivity(intent)
+            },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
         Column {
             Text(
-                text = name,
+                text = sensor.name,
                 fontWeight = FontWeight.Bold,
                 fontSize = (currentFontSize + 2).sp,
             )
             Text(
-                text = city,
+                text = sensor.city.name,
                 fontSize = (currentFontSize - 2).sp,
             )
         }
@@ -89,8 +99,7 @@ fun SensorItem(sensor: Sensor) {
     }
 
     SensorItem(
-        name = sensor.name,
-        city = sensor.city.name,
+        sensor = sensor,
         recentMeasurements = measurementsCount,
     )
 }
@@ -99,6 +108,6 @@ fun SensorItem(sensor: Sensor) {
 @Composable
 fun SensorItemPreview() {
     ApzTheme {
-        SensorItem("Test sensor", "Some city", 123)
+        SensorItem(sensor = Sensor(id = 0, name = "test sensor", secretKey = "asdqwe", city = City(id = 0, name = "test city", longitude = 0.0, latitude = 0.0)), 123)
     }
 }

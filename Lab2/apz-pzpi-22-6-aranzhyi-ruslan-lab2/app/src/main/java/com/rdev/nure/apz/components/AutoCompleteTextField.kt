@@ -25,11 +25,17 @@ import kotlinx.coroutines.launch
 fun <T> AutoCompleteField(
     modifier: Modifier = Modifier,
     fieldLabel: String,
+    defaultSuggestion: T? = null,
     getSuggestionString: (T) -> String,
     onSearch: suspend (String) -> List<T>,
     onSuggestionSelected: (T) -> Unit,
 ) {
-    var text by remember { mutableStateOf("") }
+    var text by remember {
+        mutableStateOf(
+            if (defaultSuggestion == null) ""
+            else getSuggestionString(defaultSuggestion)
+        )
+    }
     var suggestions by remember { mutableStateOf(emptyList<T>()) }
     var isDropdownExpanded by remember { mutableStateOf(false) }
     var suggestionsJob by remember { mutableStateOf<Job?>(null) }

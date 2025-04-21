@@ -19,17 +19,19 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.rdev.nure.apz.api.entities.City
+import com.rdev.nure.apz.api.entities.Sensor
 import com.rdev.nure.apz.ui.theme.ApzTheme
 
 @Composable
-fun CreateSensorPanel(
-    onAdd: (String, Long) -> Unit,
+fun CreateUpdateSensorPanel(
+    onSubmit: (String, Long) -> Unit,
     onCitySearch: suspend (String) -> List<City>,
+    sensor: Sensor? = null,
 ) {
     val context = LocalContext.current
 
-    var nameText by remember { mutableStateOf("") }
-    var selectedCity by remember { mutableStateOf<City?>(null) }
+    var nameText by remember { mutableStateOf(sensor?.name ?: "") }
+    var selectedCity by remember { mutableStateOf(sensor?.city) }
 
     Column(
         modifier = Modifier
@@ -48,6 +50,7 @@ fun CreateSensorPanel(
             getSuggestionString = { it.name },
             onSearch = onCitySearch,
             onSuggestionSelected = { selectedCity = it },
+            defaultSuggestion = sensor?.city
         )
 
         Button(
@@ -58,11 +61,14 @@ fun CreateSensorPanel(
                     Toast.makeText(context, "No city is selected!", Toast.LENGTH_SHORT).show()
                     return@Button
                 }
-                onAdd(nameText, selectedCity!!.id)
+                onSubmit(nameText, selectedCity!!.id)
             },
         ) {
             Text(
-                text = "Create",
+                text = (
+                        if (sensor == null) "Create"
+                        else "Update"
+                        ),
             )
         }
     }
@@ -72,8 +78,8 @@ fun CreateSensorPanel(
 @Composable
 fun CreateSensorPanelPreview() {
     ApzTheme {
-        CreateSensorPanel(
-            onAdd = { _, _ -> run {} },
+        CreateUpdateSensorPanel(
+            onSubmit = { _, _ -> run {} },
             onCitySearch = { _ ->
                 listOf(City(id = 0, name = "test", longitude = 0.0, latitude = 0.0))
             }
