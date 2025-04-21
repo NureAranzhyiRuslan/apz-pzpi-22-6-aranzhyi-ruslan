@@ -12,6 +12,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,6 +40,8 @@ import com.rdev.nure.apz.components.WeatherForecastCarousel
 import com.rdev.nure.apz.ui.theme.ApzTheme
 import com.rdev.nure.apz.util.getActivity
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,6 +76,7 @@ private fun MainActivityComponent() {
     var hasMore by remember { mutableStateOf(true) }
     var page by remember { mutableIntStateOf(1) }
     var totalSensorsCount by remember { mutableLongStateOf(0) }
+    val sensorMutex = Mutex()
     val sensors = remember { mutableStateOf(listOf<Sensor>()) }
     val sensorsState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -77,6 +84,8 @@ private fun MainActivityComponent() {
 
     var todayTemp by remember { mutableStateOf<Int?>(null) }
     var tomorrowTemp by remember { mutableStateOf<Int?>(null) }
+
+    val showCreateDialog = remember { mutableStateOf(false) }
 
     fun handleError(text: String) {
         Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
@@ -90,27 +99,30 @@ private fun MainActivityComponent() {
         isLoading = true
 
         coroutineScope.launch {
-            handleResponse(
-                successResponse = {
-                    if(it.result.isEmpty())
-                        hasMore = false
+            sensorMutex.withLock {
+                handleResponse(
+                    successResponse = {
+                        if(it.result.isEmpty())
+                            hasMore = false
 
-                    totalSensorsCount = it.count
-                    sensors.value += it.result
-                    page++
+                        totalSensorsCount = it.count
+                        sensors.value += it.result
+                        page++
 
-                    isLoading = false
-                },
-                errorResponse = { handleError(it.errors[0]) },
-                onHttpError = { handleError("Unknown error!") },
-                onNetworkError = { handleError("Network error!\nCheck your connection!") },
-                on401Error = {
-                    prefs.edit { remove("authToken").remove("expiresAt") }
-                    context.startActivity(Intent(context, AuthActivity::class.java))
-                    context.getActivity()!!.finish()
+                        isLoading = false
+                    },
+                    errorResponse = { handleError(it.errors[0]) },
+                    onHttpError = { handleError("Unknown error!") },
+                    onNetworkError = { handleError("Network error!\nCheck your connection!") },
+                    on401Error = {
+                        prefs.edit { remove("authToken").remove("expiresAt") }
+                        context.startActivity(Intent(context, AuthActivity::class.java))
+                        context.getActivity()!!.finish()
+                    },
+                    errorRet = { },
+                ) {
+                    sensorsApi.getSensors(authToken = token, page = page, pageSize = 10)
                 }
-            ) {
-                sensorsApi.getSensors(authToken = token)
             }
         }
     }
@@ -122,15 +134,38 @@ private fun MainActivityComponent() {
                 errorResponse = { handleError(it.errors[0]) },
                 onHttpError = { handleError("Unknown error!") },
                 onNetworkError = { handleError("Network error!\nCheck your connection!") },
+                errorRet = { },
             ) {
                 forecastApi.getForecastForCity(1)  // TODO: select city
             }
         }
     }
 
+    if(showCreateDialog.value)
+        CreateSensorDialog(
+            show = showCreateDialog,
+            onCreate = {
+                coroutineScope.launch {
+                    sensorMutex.withLock {
+                        sensorsState.scrollToItem(0)
+                        sensors.value = listOf()
+                        hasMore = true
+                        page = 1
+                    }
+                }
+            }
+        )
+
     ApzTheme {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
+            floatingActionButton = {
+                FloatingActionButton(
+                    onClick = { showCreateDialog.value = true }
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = "Add Sensor")
+                }
+            }
         ) { innerPadding ->
             Column(
                 modifier = Modifier.padding(innerPadding)
@@ -142,7 +177,11 @@ private fun MainActivityComponent() {
                 WeatherForecastCarousel(todayTemp, tomorrowTemp)
 
                 Text(
-                    text = "You have $totalSensorsCount sensors:",
+                    text = (
+                            if (isLoading && totalSensorsCount == 0L) "Loading sensors..."
+                            else if (totalSensorsCount == 0L) "You dont have any sensors"
+                            else "You have $totalSensorsCount sensors:"
+                            ),
                     modifier = mod,
                 )
                 InfiniteScrollLazyColumn(

@@ -1,5 +1,6 @@
 package com.rdev.nure.apz.components
 
+import android.content.Context
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -8,16 +9,30 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rdev.nure.apz.api.entities.Sensor
+import com.rdev.nure.apz.api.getApiClient
+import com.rdev.nure.apz.api.handleResponse
+import com.rdev.nure.apz.api.services.MeasurementService
 import com.rdev.nure.apz.ui.theme.ApzTheme
+import kotlinx.coroutines.launch
+
+private val measurementsApi: MeasurementService = getApiClient().create(MeasurementService::class.java)
 
 @Composable
-fun SensorItem(name: String, city: String, recentMeasurements: Int) {
+fun SensorItem(name: String, city: String, recentMeasurements: Int?) {
     val currentFontSize = LocalTextStyle.current.fontSize.value
 
     Row(
@@ -40,7 +55,7 @@ fun SensorItem(name: String, city: String, recentMeasurements: Int) {
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(
-                text = recentMeasurements.toString(),
+                text = recentMeasurements?.toString() ?: "?",
                 fontSize = (currentFontSize + 4).sp,
             )
             Text(
@@ -49,6 +64,35 @@ fun SensorItem(name: String, city: String, recentMeasurements: Int) {
             )
         }
     }
+}
+
+@Composable
+fun SensorItem(sensor: Sensor) {
+    val context = LocalContext.current
+    var measurementsCount by remember { mutableStateOf<Int?>(null) }
+    val coroutineScope = rememberCoroutineScope()
+    val prefs = context.getSharedPreferences("apz", Context.MODE_PRIVATE)
+    val authToken = prefs.getString("authToken", "")!!
+
+    LaunchedEffect(Unit) {
+        coroutineScope.launch {
+            handleResponse(
+                successResponse = { measurementsCount = it.size },
+                errorResponse = {  },
+                onHttpError = { },
+                onNetworkError = { },
+                errorRet = { },
+            ) {
+                measurementsApi.getMeasurementsForSensor(sensorId = sensor.id, authToken = authToken)
+            }
+        }
+    }
+
+    SensorItem(
+        name = sensor.name,
+        city = sensor.city.name,
+        recentMeasurements = measurementsCount,
+    )
 }
 
 @Preview(showBackground = true)

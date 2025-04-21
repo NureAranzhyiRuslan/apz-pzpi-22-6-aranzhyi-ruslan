@@ -61,7 +61,7 @@ fun <T> InfiniteScrollLazyColumn(
             key = { _, obj -> obj.hashCode() },
         ) { _, obj ->
             when (obj) {
-                is Sensor -> SensorItem(name = (obj as Sensor).name, city = (obj as Sensor).city.name, recentMeasurements = 0)
+                is Sensor -> SensorItem(sensor = (obj as Sensor))
                 else -> null
             }
 

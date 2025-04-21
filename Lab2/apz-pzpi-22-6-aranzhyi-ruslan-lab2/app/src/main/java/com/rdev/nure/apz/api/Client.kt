@@ -39,21 +39,22 @@ fun <T> Response<T>.getErrorResponse(): ErrorResponse? {
     }
 }
 
-suspend fun <T> handleResponse(
-    successResponse: (body: T) -> Unit,
+suspend fun <T, R> handleResponse(
+    successResponse: (body: T) -> R,
     errorResponse: (err: ErrorResponse) -> Unit,
+    errorRet: () -> R,
     onHttpError: () -> Unit,
     onNetworkError: () -> Unit,
     on401Error: (() -> Unit)? = null,
     body: suspend () -> Response<T>,
-): Boolean {
+): R {
     try {
         val resp = body()
         val respBody = resp.body()
         if(respBody == null) {
             if(resp.code() == 401 && on401Error != null) {
                 on401Error()
-                return false
+                return errorRet()
             }
 
             val errResp = resp.getErrorResponse()?.let {
@@ -66,13 +67,12 @@ suspend fun <T> handleResponse(
             }
 
             errorResponse(errResp)
-            return false
+            return errorRet()
         }
 
         Log.d("ApiClient", "Response: $respBody")
 
-        successResponse(respBody)
-        return true
+        return successResponse(respBody)
     } catch (e: HttpException) {
         Log.e("ApiClient", "Http error", e)
         onHttpError()
@@ -81,5 +81,5 @@ suspend fun <T> handleResponse(
         onNetworkError()
     }
 
-    return false
+    return errorRet()
 }

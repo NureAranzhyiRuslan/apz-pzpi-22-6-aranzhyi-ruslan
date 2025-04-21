@@ -12,11 +12,14 @@ import retrofit2.http.Header
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 interface SensorService {
     @GET("/sensors")
     suspend fun getSensors(
         @Header("Authorization") authToken: String,
+        @Query("page") page: Int,
+        @Query("page_size") pageSize: Int,
     ): Response<PaginatedResponse<Sensor>>
 
     @POST("/sensors")

@@ -74,6 +74,7 @@ fun AuthActivityComponent() {
                 errorResponse = { handleError(it.errors[0]) },
                 onHttpError = { handleError("Unknown error!") },
                 onNetworkError = { handleError("Network error!\nCheck your connection!") },
+                errorRet = { }
             ) {
                 authApi.login(LoginRequest(email = email, password = password))
             }
@@ -89,6 +90,7 @@ fun AuthActivityComponent() {
                 errorResponse = { handleError(it.errors[0]) },
                 onHttpError = { handleError("Unknown error!") },
                 onNetworkError = { handleError("Network error!\nCheck your connection!") },
+                errorRet = { }
             ) {
                 authApi.register(
                     RegisterRequest(
