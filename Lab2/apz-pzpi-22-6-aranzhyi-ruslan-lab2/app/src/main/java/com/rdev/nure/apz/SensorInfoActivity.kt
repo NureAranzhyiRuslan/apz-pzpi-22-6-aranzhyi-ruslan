@@ -247,7 +247,7 @@ fun SensorActivityComponent(sensor_: Sensor) {
             },
         ) { innerPadding ->
             Column(
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding).fillMaxWidth()
             ) {
                 WeatherForecastCarousel(todayTemp, tomorrowTemp)
 
@@ -265,21 +265,17 @@ fun SensorActivityComponent(sensor_: Sensor) {
                     sensor = sensor,
                 )
 
-                val mod = Modifier
-                    .padding(innerPadding)
-                    .fillMaxWidth()
-
                 Text(
                     text = (
                             if (totalMeasurementsCount == -1) "Loading sensors..."
                             else if (totalMeasurementsCount == 0) "Sensor does not have any measurements"
                             else "Sensor has $totalMeasurementsCount+ measurements:"
                             ),
-                    modifier = mod,
+                    modifier = Modifier.fillMaxWidth(),
                 )
 
                 LazyColumn(
-                    modifier = mod,
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     items(
                         count = measurements.value.size,

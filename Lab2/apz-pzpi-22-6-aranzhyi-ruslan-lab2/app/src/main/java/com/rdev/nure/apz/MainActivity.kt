@@ -8,16 +8,26 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -28,6 +38,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.edit
@@ -84,6 +95,7 @@ object MainActivityState {
 private val sensorsApi: SensorService = getApiClient().create(SensorService::class.java)
 private val forecastApi: ForecastService = getApiClient().create(ForecastService::class.java)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MainActivityComponent() {
     val context = LocalContext.current
@@ -103,6 +115,7 @@ private fun MainActivityComponent() {
     var tomorrowTemp by remember { mutableStateOf<Int?>(null) }
 
     val showCreateDialog = remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
 
     val needsReload by MainActivityState.needsReloadFlow.collectAsState()
 
@@ -193,15 +206,44 @@ private fun MainActivityComponent() {
                 ) {
                     Icon(Icons.Default.Add, contentDescription = "Add Sensor")
                 }
-            }
+            },
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(text = "Apz")
+                    },
+                    actions = {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                onClick = {
+                                    showMenu = false
+                                    prefs.edit { remove("authToken").remove("expiresAt") }
+                                    context.startActivity(Intent(context, AuthActivity::class.java))
+                                    context.getActivity()!!.finish()
+                                },
+                                text = {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Icon(Icons.Filled.Lock, contentDescription = "Logout")
+                                        Text(text = "Logout")
+                                    }
+                                },
+                            )
+                        }
+                    }
+                )
+            },
         ) { innerPadding ->
             Column(
-                modifier = Modifier.padding(innerPadding)
+                modifier = Modifier.padding(innerPadding).fillMaxWidth()
             ) {
-                val mod = Modifier
-                    .padding(innerPadding)
-                    .fillMaxWidth()
-
                 WeatherForecastCarousel(todayTemp, tomorrowTemp)
 
                 Text(
@@ -210,14 +252,14 @@ private fun MainActivityComponent() {
                             else if (totalSensorsCount == 0L) "You dont have any sensors"
                             else "You have $totalSensorsCount sensors:"
                             ),
-                    modifier = mod,
+                    modifier = Modifier.fillMaxWidth(),
                 )
                 InfiniteScrollLazyColumn(
                     items = sensors.value,
                     loadMoreItems = ::loadMoreSensors,
                     listState = sensorsState,
                     isLoading = isLoading,
-                    modifier = mod,
+                    modifier = Modifier.fillMaxWidth(),
                 )
             }
         }
