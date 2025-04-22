@@ -2,6 +2,9 @@ package com.rdev.nure.apz.components
 
 import android.content.Intent
 import android.content.Context
+import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -31,14 +34,23 @@ import com.rdev.nure.apz.api.getApiClient
 import com.rdev.nure.apz.api.handleResponse
 import com.rdev.nure.apz.api.services.MeasurementService
 import com.rdev.nure.apz.ui.theme.ApzTheme
+import com.rdev.nure.apz.util.getActivity
 import kotlinx.coroutines.launch
 
 private val measurementsApi: MeasurementService = getApiClient().create(MeasurementService::class.java)
 
 @Composable
-fun SensorItem(sensor: Sensor, recentMeasurements: Int?) {
+fun SensorItem(sensor_: Sensor, recentMeasurements: Int?) {
+    var sensor by remember { mutableStateOf(sensor_) }
     val context = LocalContext.current
     val currentFontSize = LocalTextStyle.current.fontSize.value
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if(result.data == null || result.data?.extras == null || !result.data!!.extras!!.containsKey("sensor"))
+            return@rememberLauncherForActivityResult
+        val resultSensor = result.data!!.extras!!.getParcelable<Sensor>("sensor")
+            ?: return@rememberLauncherForActivityResult
+        sensor = resultSensor
+    }
 
     Row(
         modifier = Modifier
@@ -47,7 +59,7 @@ fun SensorItem(sensor: Sensor, recentMeasurements: Int?) {
             .clickable {
                 val intent = Intent(context, SensorInfoActivity::class.java)
                 intent.putExtra("sensor", sensor)
-                context.startActivity(intent)
+                launcher.launch(intent)
             },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween
@@ -99,7 +111,7 @@ fun SensorItem(sensor: Sensor) {
     }
 
     SensorItem(
-        sensor = sensor,
+        sensor_ = sensor,
         recentMeasurements = measurementsCount,
     )
 }
@@ -108,6 +120,6 @@ fun SensorItem(sensor: Sensor) {
 @Composable
 fun SensorItemPreview() {
     ApzTheme {
-        SensorItem(sensor = Sensor(id = 0, name = "test sensor", secretKey = "asdqwe", city = City(id = 0, name = "test city", longitude = 0.0, latitude = 0.0)), 123)
+        SensorItem(sensor_ = Sensor(id = 0, name = "test sensor", secretKey = "asdqwe", city = City(id = 0, name = "test city", longitude = 0.0, latitude = 0.0)), 123)
     }
 }
