@@ -1,8 +1,8 @@
 package com.rdev.nure.apz.components
 
-import android.content.Intent
 import android.content.Context
-import android.widget.Toast
+import android.content.Intent
+import android.util.Log
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
@@ -27,14 +27,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.rdev.nure.apz.MainActivityState
 import com.rdev.nure.apz.SensorInfoActivity
-import com.rdev.nure.apz.api.entities.Sensor
 import com.rdev.nure.apz.api.entities.City
+import com.rdev.nure.apz.api.entities.Sensor
 import com.rdev.nure.apz.api.getApiClient
 import com.rdev.nure.apz.api.handleResponse
 import com.rdev.nure.apz.api.services.MeasurementService
 import com.rdev.nure.apz.ui.theme.ApzTheme
-import com.rdev.nure.apz.util.getActivity
 import kotlinx.coroutines.launch
 
 private val measurementsApi: MeasurementService = getApiClient().create(MeasurementService::class.java)
@@ -50,6 +50,8 @@ fun SensorItem(sensor_: Sensor, recentMeasurements: Int?) {
         val resultSensor = result.data!!.extras!!.getParcelable<Sensor>("sensor")
             ?: return@rememberLauncherForActivityResult
         sensor = resultSensor
+        if(sensor.deleted)
+            MainActivityState.updateNeedsReload()
     }
 
     Row(

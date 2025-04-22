@@ -20,6 +20,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
@@ -39,6 +40,9 @@ import com.rdev.nure.apz.components.InfiniteScrollLazyColumn
 import com.rdev.nure.apz.components.WeatherForecastCarousel
 import com.rdev.nure.apz.ui.theme.ApzTheme
 import com.rdev.nure.apz.util.getActivity
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -64,6 +68,19 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+object MainActivityState {
+    private val _needsReloadFlow = MutableStateFlow(false)
+    val needsReloadFlow = _needsReloadFlow.asStateFlow()
+
+    fun updateNeedsReload() {
+        _needsReloadFlow.update { true }
+    }
+
+    fun clearNeedsReload() {
+        _needsReloadFlow.update {false }
+    }
+}
+
 private val sensorsApi: SensorService = getApiClient().create(SensorService::class.java)
 private val forecastApi: ForecastService = getApiClient().create(ForecastService::class.java)
 
@@ -86,6 +103,8 @@ private fun MainActivityComponent() {
     var tomorrowTemp by remember { mutableStateOf<Int?>(null) }
 
     val showCreateDialog = remember { mutableStateOf(false) }
+
+    val needsReload by MainActivityState.needsReloadFlow.collectAsState()
 
     fun handleError(text: String) {
         Toast.makeText(context, text, Toast.LENGTH_SHORT).show()
@@ -141,20 +160,29 @@ private fun MainActivityComponent() {
         }
     }
 
+    fun resetSensorList() {
+        coroutineScope.launch {
+            sensorMutex.withLock {
+                sensorsState.scrollToItem(0)
+                sensors.value = listOf()
+                hasMore = true
+                page = 1
+            }
+        }
+    }
+
     if(showCreateDialog.value)
         CreateSensorDialog(
             show = showCreateDialog,
-            onCreate = {
-                coroutineScope.launch {
-                    sensorMutex.withLock {
-                        sensorsState.scrollToItem(0)
-                        sensors.value = listOf()
-                        hasMore = true
-                        page = 1
-                    }
-                }
-            }
+            onCreate = ::resetSensorList,
         )
+
+    LaunchedEffect(needsReload) {
+        if(!needsReload)
+            return@LaunchedEffect
+        resetSensorList()
+        MainActivityState.clearNeedsReload()
+    }
 
     ApzTheme {
         Scaffold(

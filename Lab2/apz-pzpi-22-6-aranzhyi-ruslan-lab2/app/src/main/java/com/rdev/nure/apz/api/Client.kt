@@ -13,6 +13,8 @@ import java.io.IOException
 
 private var client: Retrofit? = null
 private val mapper = ObjectMapper().registerKotlinModule()
+private const val TAG = "ApiClient"
+private val voidInstance = Void::class.java.getDeclaredConstructor().apply { isAccessible = true }.newInstance()
 
 fun getApiClient(): Retrofit {
     if (client == null)
@@ -30,7 +32,7 @@ fun <T> Response<T>.getErrorResponse(): ErrorResponse? {
 
     val errorStr = errorBody()?.string()
 
-    Log.e("ApiClient", "Error: "+errorStr.orEmpty())
+    Log.e(TAG, "Error: "+errorStr.orEmpty())
 
     errorStr?.let {
         return mapper.readValue<ErrorResponse>(it)
@@ -51,7 +53,13 @@ suspend fun <T, R> handleResponse(
     try {
         val resp = body()
         val respBody = resp.body()
+
+        if(respBody == null && resp.code() == 204)
+            return successResponse(voidInstance as T)
+
         if(respBody == null) {
+            Log.e(TAG, "Error: code is ${resp.code()}")
+
             if(resp.code() == 401 && on401Error != null) {
                 on401Error()
                 return errorRet()
@@ -70,11 +78,11 @@ suspend fun <T, R> handleResponse(
             return errorRet()
         }
 
-        Log.d("ApiClient", "Response: $respBody")
+        Log.d(TAG, "Response: $respBody")
 
         return successResponse(respBody)
     } catch (e: HttpException) {
-        Log.e("ApiClient", "Http error", e)
+        Log.e(TAG, "Http error", e)
         onHttpError()
     } catch (e: IOException) {
         Log.e("ApiClient", "Network error", e)

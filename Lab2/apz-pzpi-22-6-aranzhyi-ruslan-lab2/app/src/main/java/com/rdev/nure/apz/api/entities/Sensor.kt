@@ -10,12 +10,14 @@ data class Sensor(
     val secretKey: String,
     val city: City,
     val name: String,
+    var deleted: Boolean = false,
 ): Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readLong(),
         parcel.readString()!!,
         parcel.readParcelable(City::class.java.classLoader)!!,
         parcel.readString()!!,
+        parcel.readByte().toInt() == 1,
     ) {}
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -23,6 +25,7 @@ data class Sensor(
         parcel.writeString(secretKey)
         parcel.writeParcelable(city, 0)
         parcel.writeString(name)
+        parcel.writeByte(if (deleted) 1 else 0)
     }
 
     override fun describeContents(): Int {

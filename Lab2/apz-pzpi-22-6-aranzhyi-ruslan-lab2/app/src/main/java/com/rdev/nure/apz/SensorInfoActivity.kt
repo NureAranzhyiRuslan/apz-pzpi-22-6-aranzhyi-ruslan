@@ -10,13 +10,24 @@ import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -25,6 +36,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.edit
@@ -70,6 +82,7 @@ private val sensorsApi: SensorService = getApiClient().create(SensorService::cla
 private val measurementsApi: MeasurementService = getApiClient().create(MeasurementService::class.java)
 private val forecastApi: ForecastService = getApiClient().create(ForecastService::class.java)
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SensorActivityComponent(sensor_: Sensor) {
     val context = LocalContext.current
@@ -85,6 +98,15 @@ fun SensorActivityComponent(sensor_: Sensor) {
 
     var todayTemp by remember { mutableStateOf<Int?>(null) }
     var tomorrowTemp by remember { mutableStateOf<Int?>(null) }
+
+    var showMenu by remember { mutableStateOf(false) }
+
+    fun goBack() {
+        val resultIntent = Intent()
+        resultIntent.putExtra("sensor", sensor)
+        context.getActivity()!!.setResult(Activity.RESULT_OK, resultIntent)
+        context.getActivity()!!.finish()
+    }
 
     fun update(name: String, cityId: Long) {
         coroutineScope.launch {
@@ -142,6 +164,28 @@ fun SensorActivityComponent(sensor_: Sensor) {
         }
     }
 
+    fun deleteSensor() {
+        coroutineScope.launch {
+            handleResponse(
+                successResponse = {
+                    sensor.deleted = true
+                    goBack()
+                },
+                errorResponse = { handleError(it.errors[0]) },
+                onHttpError = { handleError("Unknown error!") },
+                onNetworkError = { handleError("Network error!\nCheck your connection!") },
+                on401Error = {
+                    prefs.edit { remove("authToken").remove("expiresAt") }
+                    context.startActivity(Intent(context, AuthActivity::class.java))
+                    context.getActivity()!!.finish()
+                },
+                errorRet = { },
+            ) {
+                sensorsApi.deleteSensor(authToken = token, sensorId = sensor.id)
+            }
+        }
+    }
+
     LaunchedEffect(Unit) {
         loadMoreMeasurements()
     }
@@ -160,16 +204,47 @@ fun SensorActivityComponent(sensor_: Sensor) {
         }
     }
 
-    BackHandler {
-        val resultIntent = Intent()
-        resultIntent.putExtra("sensor", sensor)
-        context.getActivity()!!.setResult(Activity.RESULT_OK, resultIntent)
-        context.getActivity()!!.finish()
-    }
+    BackHandler(onBack = ::goBack)
 
     ApzTheme {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
+            topBar = {
+                TopAppBar(
+                    title = {
+                        Text(text = sensor.name)
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = ::goBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        }
+                    },
+                    actions = {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(Icons.Default.MoreVert, contentDescription = "Menu")
+                        }
+                        DropdownMenu(
+                            expanded = showMenu,
+                            onDismissRequest = { showMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                onClick = {
+                                    showMenu = false
+                                    deleteSensor()
+                                },
+                                text = {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        Icon(Icons.Filled.Delete, contentDescription = "Delete")
+                                        Text(text = "Delete")
+                                    }
+                                },
+                            )
+                        }
+                    }
+                )
+            },
         ) { innerPadding ->
             Column(
                 modifier = Modifier.padding(innerPadding)
