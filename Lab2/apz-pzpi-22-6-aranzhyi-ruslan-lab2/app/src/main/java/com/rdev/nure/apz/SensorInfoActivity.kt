@@ -9,6 +9,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -55,6 +56,11 @@ import com.rdev.nure.apz.ui.theme.ApzTheme
 import com.rdev.nure.apz.util.getActivity
 import com.rdev.nure.apz.util.searchCity
 import kotlinx.coroutines.launch
+import java.text.DateFormat
+import java.text.SimpleDateFormat
+import java.util.Date
+
+private val dateFmt: DateFormat = SimpleDateFormat("dd.MM.yyyy HH:mm")
 
 class SensorInfoActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -247,7 +253,9 @@ fun SensorActivityComponent(sensor_: Sensor) {
             },
         ) { innerPadding ->
             Column(
-                modifier = Modifier.padding(innerPadding).fillMaxWidth()
+                modifier = Modifier
+                    .padding(innerPadding)
+                    .fillMaxWidth()
             ) {
                 WeatherForecastCarousel(todayTemp, tomorrowTemp)
 
@@ -281,13 +289,21 @@ fun SensorActivityComponent(sensor_: Sensor) {
                         count = measurements.value.size,
                         contentType = { Measurement::class.java },
                         key = { it.hashCode() },
-                    ) {
-                        for(measurement in measurements.value) {
+                    ) { index ->
+                        val measurement = measurements.value[index]
+
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            modifier = Modifier.fillMaxWidth(),
+                        ) {
                             Text(
-                                text = measurement.temperature.toString()
+                                text = "${measurement.temperature} °C",
                             )
-                            HorizontalDivider()
+                            Text(
+                                text = dateFmt.format(Date(measurement.timestamp * 1000L)),
+                            )
                         }
+                        HorizontalDivider()
                     }
                 }
             }
