@@ -178,3 +178,135 @@ DELETE	/admin/measurements/{measurement_id}	Видалення погодног�
 04:02 Адміністрування: користувачі
 04:55 Адміністрування: пристрої
 05:50 Адміністрування: вимірювання
+
+
+Додаток Б
+Програмний код
+
+Б.1 Обробка погодних даних та рахування прогнозу
+GitHub репозиторій: https://github.com/ArRuslan/apz-backend/blob/master/idk/routers/forecast.py#L13.
+
+     1	AVERAGE_ALTITUDE = 150  # Meters (Ukraine)
+     2	WINTER_MONTHS = (12, 1, 2)
+     3	SUMMER_MONTHS = (6, 7, 8)
+     4	ZERO_KELVIN = -273.15
+     5	THERMAL_GRADIENT_PER_METER = 0.0065
+     6	
+     7	router = APIRouter(prefix="/forecast")
+     8	
+     9	
+    10	def calculate_zambretti_method(
+    11	        measurements: list[dict[str, str | float]], real_count: int | None = None, locale: Locale = Locale.EN
+    12	) -> dict:
+    13	    pressure_mts = [measurement["pressure"] for measurement in measurements]
+    14	
+    15	    # Pressure trend
+    16	    count = len(pressure_mts)
+    17	    sum_x = count / 2 * (count - 1)
+    18	    sum_y = sum(pressure_mts)
+    19	    sum_x_sq = count * (count + 1) * (2 * count + 1) / 6
+    20	    sum_xy = sum(map(lambda item: item[0] * item[1], enumerate(pressure_mts)))
+    21	    a = count * sum_xy - sum_x * sum_y
+    22	    a /= count * sum_x_sq - sum_x * sum_x
+    23	    pressure_delta = a * count
+    24	
+    25	    # Pressure at sea level
+    26	    altitude = THERMAL_GRADIENT_PER_METER * AVERAGE_ALTITUDE
+    27	    p0 = pressure_mts[-1] * ((1 - altitude / (measurements[-1]["temperature"] + altitude - ZERO_KELVIN)) ** (-5.257))
+    28	
+    29	    # Zambretti algorithm itself
+    30	    if pressure_delta >= 1:
+    31	        z = 179 - 20 * p0 / 129
+    32	    elif pressure_delta <= -1:
+    33	        z = 130 - 10 * p0 / 81
+    34	    else:
+    35	        z = 147 - 50 * p0 / 376
+    36	
+    37	    this_month = datetime.now().month
+    38	    if this_month in WINTER_MONTHS and pressure_delta <= -1:
+    39	        z -= 1
+    40	    elif this_month in SUMMER_MONTHS and pressure_delta >= 1:
+    41	        z += 1
+    42	
+    43	    z = int(z)
+    44	    next_temp = measurements[-1]["temperature"] + measurements[-1]["temperature"] * a
+    45	
+    46	    return {
+    47	        "info_text": zambretti_text[locale][z - 1],
+    48	        "temperature": next_temp,
+    49	        "details": {
+    50	            "has_details": True,
+    51	            "measurements_count": count,
+    52	            "measurements_db_count": real_count or count,
+    53	            "pressure_average": sum_y / count,
+    54	            "pressure_delta": pressure_delta,
+    55	            "a": a,
+    56	            "p0": p0,
+    57	            "z": z,
+    58	        }
+59	    }
+
+Б.2 Обробка запиту прогнозу погоди для міста
+GitHub репозиторій: https://github.com/ArRuslan/apz-backend/blob/master/idk/routers/forecast.py#L95.
+
+     1	async def get_city_forecast(city: int | str):
+     2	    try:
+     3	        city = int(city)
+     4	    except ValueError:
+     5	        pass
+     6	
+     7	    if (city := await City.get_or_none(**{"name" if isinstance(city, str) else "id": city})) is None:
+     8	        raise CustomMessageException("Unknown city.", 404)
+     9	
+    10	    forecast_query = {
+    11	        "timestamp__lt": datetime.now(UTC) - timedelta(hours=1),
+    12	        "city": city,
+    13	    }
+    14	    if forecast := await Forecast.filter(**forecast_query).order_by("-timestamp").first():
+    15	        return forecast.to_json()
+    16	
+    17	    query = {
+    18	        "time__gt": datetime.now(UTC) - timedelta(days=1),
+    19	        "sensor__city": city,
+    20	    }
+    21	    measurements_all = await Measurement.filter(**query).order_by("time")
+    22	    measurements: list[dict] = []
+    23	    for idx, measurement in enumerate(measurements_all):
+    24	        time_section = int(measurement.time.timestamp()) % (60 * 30)
+    25	        if not measurements or measurements[-1]["time"] != time_section:
+    26	            if measurements:
+    27	                pressure_items = measurements[-1]["pressure_items"]
+    28	                temp_items = measurements[-1]["temperature_items"]
+    29	                measurements[-1]["pressure"] = sum([0, *pressure_items]) / len(pressure_items)
+    30	                measurements[-1]["temperature"] = sum([0, *temp_items]) / len(temp_items)
+    31	                del measurements[-1]["pressure_items"]
+    32	                del measurements[-1]["temperature_items"]
+    33	
+    34	            measurements.append({
+    35	                "time": time_section,
+    36	                "pressure_items": [],
+    37	                "temperature_items": [],
+    38	            })
+    39	
+    40	        measurements[-1]["pressure_items"].append(measurement.pressure)
+    41	        measurements[-1]["temperature_items"].append(measurement.temperature)
+    42	
+    43	    if not measurements:
+    44	        raise CustomMessageException("No measurements found for last day", 400)
+    45	
+    46	    if "pressure_items" in measurements[-1]:
+    47	        pressure_items = measurements[-1]["pressure_items"]
+    48	        temp_items = measurements[-1]["temperature_items"]
+    49	        measurements[-1]["pressure"] = sum([0, *pressure_items]) / len(pressure_items)
+    50	        measurements[-1]["temperature"] = sum([0, *temp_items]) / len(temp_items)
+    51	        del measurements[-1]["pressure_items"]
+    52	        del measurements[-1]["temperature_items"]
+    53	
+    54	    result = calculate_zambretti_method(measurements, len(measurements_all))
+    55	    await Forecast.create(
+    56	        city=city,
+    57	        info_text=result["info_text"],
+    58	        temperature=result["temperature"],
+    59	    )
+    60	
+    61	    return result
