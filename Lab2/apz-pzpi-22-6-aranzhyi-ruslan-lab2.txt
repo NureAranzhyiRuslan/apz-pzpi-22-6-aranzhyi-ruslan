@@ -185,7 +185,7 @@ DELETE	/admin/measurements/{measurement_id}	Видалення погодног�
 Додаток В
 Програмний код
 
-Б.1 Обробка погодних даних та рахування прогнозу
+В.1 Математична обробка прикладних даних
 GitHub репозиторій: https://github.com/ArRuslan/apz-backend/blob/master/idk/routers/forecast.py#L13.
 
      1	AVERAGE_ALTITUDE = 150  # Meters (Ukraine)
@@ -248,72 +248,7 @@ GitHub репозиторій: https://github.com/ArRuslan/apz-backend/blob/mast
     58	        }
 59	    }
 
-Б.2 Обробка запиту прогнозу погоди для міста
-GitHub репозиторій: https://github.com/ArRuslan/apz-backend/blob/master/idk/routers/forecast.py#L95.
-
-     1	async def get_city_forecast(city: int | str):
-     2	    try:
-     3	        city = int(city)
-     4	    except ValueError:
-     5	        pass
-     6	
-     7	    if (city := await City.get_or_none(**{"name" if isinstance(city, str) else "id": city})) is None:
-     8	        raise CustomMessageException("Unknown city.", 404)
-     9	
-    10	    forecast_query = {
-    11	        "timestamp__lt": datetime.now(UTC) - timedelta(hours=1),
-    12	        "city": city,
-    13	    }
-    14	    if forecast := await Forecast.filter(**forecast_query).order_by("-timestamp").first():
-    15	        return forecast.to_json()
-    16	
-    17	    query = {
-    18	        "time__gt": datetime.now(UTC) - timedelta(days=1),
-    19	        "sensor__city": city,
-    20	    }
-    21	    measurements_all = await Measurement.filter(**query).order_by("time")
-    22	    measurements: list[dict] = []
-    23	    for idx, measurement in enumerate(measurements_all):
-    24	        time_section = int(measurement.time.timestamp()) % (60 * 30)
-    25	        if not measurements or measurements[-1]["time"] != time_section:
-    26	            if measurements:
-    27	                pressure_items = measurements[-1]["pressure_items"]
-    28	                temp_items = measurements[-1]["temperature_items"]
-    29	                measurements[-1]["pressure"] = sum([0, *pressure_items]) / len(pressure_items)
-    30	                measurements[-1]["temperature"] = sum([0, *temp_items]) / len(temp_items)
-    31	                del measurements[-1]["pressure_items"]
-    32	                del measurements[-1]["temperature_items"]
-    33	
-    34	            measurements.append({
-    35	                "time": time_section,
-    36	                "pressure_items": [],
-    37	                "temperature_items": [],
-    38	            })
-    39	
-    40	        measurements[-1]["pressure_items"].append(measurement.pressure)
-    41	        measurements[-1]["temperature_items"].append(measurement.temperature)
-    42	
-    43	    if not measurements:
-    44	        raise CustomMessageException("No measurements found for last day", 400)
-    45	
-    46	    if "pressure_items" in measurements[-1]:
-    47	        pressure_items = measurements[-1]["pressure_items"]
-    48	        temp_items = measurements[-1]["temperature_items"]
-    49	        measurements[-1]["pressure"] = sum([0, *pressure_items]) / len(pressure_items)
-    50	        measurements[-1]["temperature"] = sum([0, *temp_items]) / len(temp_items)
-    51	        del measurements[-1]["pressure_items"]
-    52	        del measurements[-1]["temperature_items"]
-    53	
-    54	    result = calculate_zambretti_method(measurements, len(measurements_all))
-    55	    await Forecast.create(
-    56	        city=city,
-    57	        info_text=result["info_text"],
-    58	        temperature=result["temperature"],
-    59	    )
-    60	
-    61	    return result
-
-Б.3 Адміністрування користувачів
+В.2 Адміністрування бізнес-логіки системи
 GitHub репозиторій: https://github.com/ArRuslan/apz-backend/blob/master/idk/routers/admin/users.py.
 
      1	from fastapi import Query, APIRouter
@@ -333,7 +268,7 @@ GitHub репозиторій: https://github.com/ArRuslan/apz-backend/blob/mast
     15	    db_query = User.all().order_by("id")
     16	    count = await db_query.count()
     17	    users = await db_query.limit(query.page_size).offset(query.page_size * (query.page - 1))
-    18
+    18	
     19	    return {
     20	        "count": count,
     21	        "result": [
@@ -373,168 +308,7 @@ GitHub репозиторій: https://github.com/ArRuslan/apz-backend/blob/mast
     55	        ]
 56	    }
 
-Б.4 Адміністрування пристроїв
-GitHub репозиторій: https://github.com/ArRuslan/apz-backend/blob/master/idk/routers/admin/users.py.
-
-     1	from fastapi import Query, APIRouter
-     2	
-     3	from idk.dependencies import JwtAuthAdminDepN
-     4	from idk.models import Sensor, Measurement
-     5	from idk.schemas.common import PaginationResponse, PaginationQuery
-     6	from idk.schemas.measurements import MeasurementInfo
-     7	from idk.schemas.sensors import SensorInfo
-     8	from idk.utils.custom_exception import CustomMessageException
-     9	
-    10	router = APIRouter(prefix="/sensors")
-    11	
-    12	
-    13	@router.get("", dependencies=[JwtAuthAdminDepN], response_model=PaginationResponse[SensorInfo])
-    14	async def get_sensors(query: PaginationQuery = Query()):
-    15	    db_query = Sensor.all().order_by("id")
-    16	    count = await db_query.count()
-    17	    sensors = await db_query.limit(query.page_size).offset(query.page_size * (query.page - 1))
-    18	
-    19	    return {
-    20	        "count": count,
-    21	        "result": [
-    22	            await sensor.to_json()
-    23	            for sensor in sensors
-    24	        ]
-    25	    }
-    26	
-    27	
-    28	@router.get("/{sensor_id}", dependencies=[JwtAuthAdminDepN], response_model=SensorInfo)
-    29	async def get_sensor(sensor_id: int):
-    30	    if (sensor := await Sensor.get_or_none(id=sensor_id)) is None:
-    31	        raise CustomMessageException("Unknown sensor.", 404)
-    32	
-    33	    return await sensor.to_json()
-    34	
-    35	
-    36	@router.delete("/{sensor_id}", dependencies=[JwtAuthAdminDepN], status_code=204)
-    37	async def delete_sensor(sensor_id: int):
-    38	    await Sensor.filter(id=sensor_id).delete()
-    39	
-    40	
-    41	@router.get("/{sensor_id}/measurements", dependencies=[JwtAuthAdminDepN], response_model=PaginationResponse[MeasurementInfo])
-    42	async def get_sensor_measurements(sensor_id: int, query: PaginationQuery = Query()):
-    43	    if (sensor := await Sensor.get_or_none(id=sensor_id)) is None:
-    44	        raise CustomMessageException("Unknown sensor.", 404)
-    45	
-    46	    db_query = Measurement.filter(sensor=sensor).order_by("id")
-    47	    count = await db_query.count()
-    48	    measurements = await db_query.limit(query.page_size).offset(query.page_size * (query.page - 1))
-    49	
-    50	    return {
-    51	        "count": count,
-    52	        "result": [
-    53	            measurement.to_json()
-    54	            for measurement in measurements
-    55	        ]
-56	    }
-
-Б.5 Адміністрування міст
-GitHub репозиторій: https://github.com/ArRuslan/apz-backend/blob/master/idk/routers/admin/cities.py.
-
-     1	from fastapi import Query, APIRouter
-     2	
-     3	from idk.dependencies import JwtAuthAdminDepN
-     4	from idk.models import City
-     5	from idk.schemas.cities import CityInfoResponse, CityCreateRequest, CityEditRequest
-     6	from idk.schemas.common import PaginationResponse, PaginationQuery
-     7	from idk.utils.custom_exception import CustomMessageException
-     8	
-     9	router = APIRouter(prefix="/cities")
-    10	
-    11	
-    12	@router.get("", dependencies=[JwtAuthAdminDepN], response_model=PaginationResponse[CityInfoResponse])
-    13	async def get_cities(query: PaginationQuery = Query()):
-    14	    db_query = City.all().order_by("id")
-    15	    count = await db_query.count()
-    16	    cities = await db_query.limit(query.page_size).offset(query.page_size * (query.page - 1))
-    17	
-    18	    return {
-    19	        "count": count,
-    20	        "result": [
-    21	            city.to_json()
-    22	            for city in cities
-    23	        ]
-    24	    }
-    25	
-    26	
-    27	@router.get("/{city_id}", dependencies=[JwtAuthAdminDepN], response_model=CityInfoResponse)
-    28	async def get_city(city_id: int):
-    29	    if (city := await City.get_or_none(id=city_id)) is None:
-    30	        raise CustomMessageException("Unknown city.", 404)
-    31	
-    32	    return city.to_json()
-    33	
-    34	
-    35	@router.post("", dependencies=[JwtAuthAdminDepN], response_model=CityInfoResponse)
-    36	async def create_city(data: CityCreateRequest):
-    37	    city = await City.create(**data.model_dump())
-    38	
-    39	    return city.to_json()
-    40	
-    41	
-    42	@router.patch("/{city_id}", dependencies=[JwtAuthAdminDepN], response_model=CityInfoResponse)
-    43	async def edit_city(city_id: int, data: CityEditRequest):
-    44	    if (city := await City.get_or_none(id=city_id)) is None:
-    45	        raise CustomMessageException("Unknown city.", 404)
-    46	
-    47	    changes = data.model_dump(exclude_defaults=True)
-    48	    if changes:
-    49	        await city.update_from_dict(changes).save(update_fields=list(changes.keys()))
-    50	
-    51	    return city.to_json()
-    52	
-    53	
-    54	@router.delete("/{city_id}", dependencies=[JwtAuthAdminDepN], status_code=204)
-    55	async def delete_city(city_id: int):
-    56	    await City.filter(id=city_id).delete()
-
-Б.6 Адміністрування вимірювань
-GitHub репозиторій: https://github.com/ArRuslan/apz-backend/blob/master/idk/routers/admin/measurements.py.
-
-     1	from fastapi import Query, APIRouter
-     2	
-     3	from idk.dependencies import JwtAuthAdminDepN
-     4	from idk.models import Measurement
-     5	from idk.schemas.common import PaginationResponse, PaginationQuery
-     6	from idk.schemas.measurements import MeasurementInfo
-     7	from idk.utils.custom_exception import CustomMessageException
-     8	
-     9	router = APIRouter(prefix="/measurements")
-    10	
-    11	
-    12	@router.get("", dependencies=[JwtAuthAdminDepN], response_model=PaginationResponse[MeasurementInfo])
-    13	async def get_measurements(query: PaginationQuery = Query()):
-    14	    db_query = Measurement.all().order_by("id")
-    15	    count = await db_query.count()
-    16	    measurements = await db_query.limit(query.page_size).offset(query.page_size * (query.page - 1))
-    17	
-    18	    return {
-    19	        "count": count,
-    20	        "result": [
-    21	            measurement.to_json()
-    22	            for measurement in measurements
-    23	        ]
-    24	    }
-    25	
-    26	
-    27	@router.get("/{measurement_id}", dependencies=[JwtAuthAdminDepN], response_model=MeasurementInfo)
-    28	async def get_measurement(measurement_id: int):
-    29	    if (measurement := await Measurement.get_or_none(id=measurement_id)) is None:
-    30	        raise CustomMessageException("Unknown measurement.", 404)
-    31	
-    32	    return measurement.to_json()
-    33	
-    34	
-    35	@router.delete("/{measurement_id}", dependencies=[JwtAuthAdminDepN], status_code=204)
-    36	async def delete_measurement(measurement_id: int):
-37	    await Measurement.filter(id=measurement_id).delete()
-
-Б.7 Резервне копіювання користувацьких даних
+В.3 Резервне копіювання користувацьких даних
 
      1	#!/bin/bash
      2   mariadb-dump -u root idk > backup-$(date "+%d%m%Y-%H%M%S").sql
