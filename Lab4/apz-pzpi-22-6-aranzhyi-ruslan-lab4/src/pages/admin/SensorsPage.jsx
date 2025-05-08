@@ -11,36 +11,42 @@ import {
     TableRow,
     Typography,
 } from "@mui/material";
-import UsersTableItem from "../../components/admin/UsersTableItem.jsx";
+import SensorsTableItem from "../../components/admin/SensorsTableItem.jsx";
 import CenteredTableRow from "../../components/CenteredTableRow.jsx";
 
-
-function AdminUsersPage() {
-    const [users, setUsers] = useState([]);
-    const [usersCount, setUsersCount] = useState(0);
+function AdminSensorsPage() {
+    const [sensors, setSensors] = useState([]);
+    const [sensorsCount, setSensorsCount] = useState(0);
 
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [loading, setLoading] = useState(false);
 
-    const fetchUsers = async () => {
+    const fetchSensors = async () => {
         // TODO: fetch via api
         setLoading(true);
-        const fakeUsers = Array.from({ length: rowsPerPage }, (_, i) => ({
+        const fakeSensors = Array.from({ length: rowsPerPage }, (_, i) => ({
             id: rowsPerPage * page + i,
-            name: `User ${rowsPerPage * page + i}`,
-            email: `user${rowsPerPage * page + i}@example.com`,
+            name: `Sensor ${rowsPerPage * page + i}`,
+            city: {
+                id: 123,
+                name: "idk",
+            },
+            owner: {
+                id: 1,
+                email: "some_user@example.com",
+            },
         }));
 
         await new Promise(resolve => setTimeout(resolve, 1500));
 
-        setUsers(fakeUsers);
-        setUsersCount(125);
+        setSensors(fakeSensors);
+        setSensorsCount(125);
         setLoading(false);
     }
 
     useEffect(() => {
-        fetchUsers();
+        fetchSensors();
     }, [page, rowsPerPage]);
 
     const handleChangePage = (event, newPage) => {
@@ -55,7 +61,7 @@ function AdminUsersPage() {
     return (
         <Box p={3}>
             <Typography variant="h5" mb={2}>
-                Users
+                Sensors
             </Typography>
 
             <Paper>
@@ -64,7 +70,8 @@ function AdminUsersPage() {
                         <TableRow>
                             <TableCell>ID</TableCell>
                             <TableCell>Name</TableCell>
-                            <TableCell>Email</TableCell>
+                            <TableCell>City</TableCell>
+                            <TableCell>Owner</TableCell>
                             <TableCell align="right">Actions</TableCell>
                         </TableRow>
                     </TableHead>
@@ -76,12 +83,12 @@ function AdminUsersPage() {
                                         <CircularProgress/>
                                     </CenteredTableRow>
                                 )
-                                : users.map(user => <UsersTableItem user={user}/>)
+                                : sensors.map(sensor => <SensorsTableItem sensor={sensor}/>)
                         }
 
-                        {!loading && users.length === 0 && (
+                        {!loading && sensors.length === 0 && (
                             <CenteredTableRow>
-                                No users found.
+                                No sensors found.
                             </CenteredTableRow>
                         )}
                     </TableBody>
@@ -89,7 +96,7 @@ function AdminUsersPage() {
 
                 <TablePagination
                     component="div"
-                    count={usersCount}
+                    count={sensorsCount}
                     page={page}
                     onPageChange={handleChangePage}
                     rowsPerPage={rowsPerPage}
@@ -102,4 +109,4 @@ function AdminUsersPage() {
     );
 }
 
-export default AdminUsersPage;
+export default AdminSensorsPage;
