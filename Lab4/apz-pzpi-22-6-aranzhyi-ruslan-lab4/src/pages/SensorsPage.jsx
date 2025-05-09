@@ -3,6 +3,7 @@ import {Box, Button, Typography,} from "@mui/material";
 import InfiniteScroll from "react-infinite-scroll-component";
 import SensorCreateUpdateDialog from "../components/SensorCreateUpdateDialog.jsx";
 import SensorComponent from "../components/SensorComponent.jsx";
+import Navigation from "../components/Navigation.jsx";
 import {useSnackbar} from "notistack";
 
 const PAGE_SIZE = 10;
@@ -40,45 +41,48 @@ export default function SensorsPage() {
     }, []);
 
     return (
-        <Box p={2}>
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
-                <Typography variant="h5">Weather Sensors</Typography>
-                <Button variant="contained" onClick={() => setDialogOpen(true)}>
-                    Add Sensor
-                </Button>
+        <>
+            <Navigation title="Your weather sensors"/>
+
+            <Box p={2}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Button variant="contained" onClick={() => setDialogOpen(true)}>
+                        Add Sensor
+                    </Button>
+                </Box>
+
+                <InfiniteScroll
+                    dataLength={sensors.length}
+                    next={loadMore}
+                    hasMore={hasMore}
+                    loader={<Typography>Loading more sensors...</Typography>}
+                >
+                    {sensors.map((sensor) => (
+                        <SensorComponent
+                            key={sensor.id}
+                            sensor={sensor}
+                            onDelete={() => setSensors((prev) => prev.filter((s) => s.id !== sensor.id))}
+                        />
+                    ))}
+                </InfiniteScroll>
+
+                {hasMore && <Box display="flex" justifyContent="center" mb={2}>
+                    <Button variant="contained" onClick={loadMore}>
+                        Load more
+                    </Button>
+                </Box>}
+
+                <SensorCreateUpdateDialog
+                    isCreate={true}
+                    dialogOpen={dialogOpen}
+                    setDialogOpen={setDialogOpen}
+                    onSensorResult={newSensor => {
+                        console.log("new sensor", newSensor);
+                        setSensors((prev) => [newSensor, ...prev]);
+                        enqueueSnackbar("Sensor created!", {variant: "success"});
+                    }}
+                />
             </Box>
-
-            <InfiniteScroll
-                dataLength={sensors.length}
-                next={loadMore}
-                hasMore={hasMore}
-                loader={<Typography>Loading more sensors...</Typography>}
-            >
-                {sensors.map((sensor) => (
-                    <SensorComponent
-                        key={sensor.id}
-                        sensor={sensor}
-                        onDelete={() => setSensors((prev) => prev.filter((s) => s.id !== sensor.id))}
-                    />
-                ))}
-            </InfiniteScroll>
-
-            {hasMore && <Box display="flex" justifyContent="center" mb={2}>
-                <Button variant="contained" onClick={loadMore}>
-                    Load more
-                </Button>
-            </Box>}
-
-            <SensorCreateUpdateDialog
-                isCreate={true}
-                dialogOpen={dialogOpen}
-                setDialogOpen={setDialogOpen}
-                onSensorResult={newSensor => {
-                    console.log("new sensor", newSensor);
-                    setSensors((prev) => [newSensor, ...prev]);
-                    enqueueSnackbar("Sensor created!", {variant: "success"});
-                }}
-            />
-        </Box>
+        </>
     );
 }

@@ -9,10 +9,10 @@ import {
     TableHead,
     TablePagination,
     TableRow,
-    Typography,
 } from "@mui/material";
 import SensorsTableItem from "../../components/admin/SensorsTableItem.jsx";
 import CenteredTableRow from "../../components/CenteredTableRow.jsx";
+import Navigation from "../../components/Navigation.jsx";
 
 function AdminSensorsPage() {
     const [sensors, setSensors] = useState([]);
@@ -59,53 +59,53 @@ function AdminSensorsPage() {
     };
 
     return (
-        <Box p={3}>
-            <Typography variant="h5" mb={2}>
-                Sensors
-            </Typography>
+        <>
+            <Navigation title="Sensors"/>
 
-            <Paper>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>ID</TableCell>
-                            <TableCell>Name</TableCell>
-                            <TableCell>City</TableCell>
-                            <TableCell>Owner</TableCell>
-                            <TableCell align="right">Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {
-                            loading
-                                ? (
-                                    <CenteredTableRow>
-                                        <CircularProgress/>
-                                    </CenteredTableRow>
-                                )
-                                : sensors.map(sensor => <SensorsTableItem sensor={sensor}/>)
-                        }
+            <Box p={3}>
+                <Paper>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>ID</TableCell>
+                                <TableCell>Name</TableCell>
+                                <TableCell>City</TableCell>
+                                <TableCell>Owner</TableCell>
+                                <TableCell align="right">Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {
+                                loading
+                                    ? (
+                                        <CenteredTableRow>
+                                            <CircularProgress/>
+                                        </CenteredTableRow>
+                                    )
+                                    : sensors.map(sensor => <SensorsTableItem sensor={sensor}/>)
+                            }
 
-                        {!loading && sensors.length === 0 && (
-                            <CenteredTableRow>
-                                No sensors found.
-                            </CenteredTableRow>
-                        )}
-                    </TableBody>
-                </Table>
+                            {!loading && sensors.length === 0 && (
+                                <CenteredTableRow>
+                                    No sensors found.
+                                </CenteredTableRow>
+                            )}
+                        </TableBody>
+                    </Table>
 
-                <TablePagination
-                    component="div"
-                    count={sensorsCount}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    rowsPerPage={rowsPerPage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                    rowsPerPageOptions={[5, 10, 25, 50]}
-                    disabled={loading}
-                />
-            </Paper>
-        </Box>
+                    <TablePagination
+                        component="div"
+                        count={sensorsCount}
+                        page={page}
+                        onPageChange={handleChangePage}
+                        rowsPerPage={rowsPerPage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                        rowsPerPageOptions={[5, 10, 25, 50]}
+                        disabled={loading}
+                    />
+                </Paper>
+            </Box>
+        </>
     );
 }
 

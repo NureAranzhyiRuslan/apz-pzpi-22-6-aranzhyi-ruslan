@@ -1,13 +1,8 @@
 import React, {useState} from "react";
-import {
-    Box,
-    Typography,
-    TextField,
-    Button,
-    Stack,
-} from "@mui/material";
+import {Box, Button, Stack, TextField,} from "@mui/material";
 import {useNavigate, useParams} from "react-router-dom";
 import {useSnackbar} from "notistack";
+import Navigation from "../../components/Navigation.jsx";
 
 function AdminUserInfoPage() {
     const { userId } = useParams();
@@ -38,25 +33,25 @@ function AdminUserInfoPage() {
     }
 
     return (
-        <Box p={3}>
-            <Typography variant="h5" mb={2}>
-                User {userId}
-            </Typography>
+        <>
+            <Navigation title={`User ${userId}`}/>
 
-            <Stack spacing={2} maxWidth={400}>
-                <TextField label="Name" defaultValue="User name" disabled={loading} />
-                <TextField label="Email" defaultValue="user@example.com" disabled={loading} />
+            <Box p={3}>
+                <Stack spacing={2} maxWidth={400}>
+                    <TextField label="Name" defaultValue="User name" disabled={loading} />
+                    <TextField label="Email" defaultValue="user@example.com" disabled={loading} />
 
-                <Stack direction="row" spacing={2}>
-                    <Button variant="contained" color="primary" onClick={saveUser} disabled={loading}>
-                        Save
-                    </Button>
-                    <Button variant="outlined" color="error" onClick={deleteUser} disabled={loading}>
-                        Delete User
-                    </Button>
+                    <Stack direction="row" spacing={2}>
+                        <Button variant="contained" color="primary" onClick={saveUser} disabled={loading}>
+                            Save
+                        </Button>
+                        <Button variant="outlined" color="error" onClick={deleteUser} disabled={loading}>
+                            Delete User
+                        </Button>
+                    </Stack>
                 </Stack>
-            </Stack>
-        </Box>
+            </Box>
+        </>
     );
 }
 

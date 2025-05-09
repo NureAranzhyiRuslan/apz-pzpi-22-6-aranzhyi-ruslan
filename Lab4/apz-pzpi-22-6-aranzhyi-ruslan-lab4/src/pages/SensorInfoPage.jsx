@@ -1,8 +1,9 @@
 import React, {useEffect, useState} from "react";
-import {Box, List, Paper, Typography,} from "@mui/material";
+import {Box, List, Paper} from "@mui/material";
 import {useParams} from "react-router-dom";
 import {LineChart} from "@mui/x-charts";
 import Measurement from "../components/Measurement.jsx";
+import Navigation from "../components/Navigation.jsx";
 
 function SensorInfoPage() {
     const { sensorId } = useParams();
@@ -19,29 +20,29 @@ function SensorInfoPage() {
     }, [sensorId]);
 
     return (
-        <Box p={3}>
-            <Typography variant="h5" mb={2}>
-                Sensor [sensor name] (ID: {sensorId})
-            </Typography>
+        <>
+            <Navigation title={`Sensor [sensor name] (ID: ${sensorId})`}/>
 
-            <LineChart
-                xAxis={[{
-                    data: measurements.map(measurement => measurement.date),
-                    valueFormatter: value => new Date(value * 1000).toLocaleString(),
-                }]}
-                series={[{
-                    data: measurements.map(measurement => measurement.temperature),
-                    valueFormatter: value => `${value}°C`,
-                }]}
-                height={300}
-            />
+            <Box p={3}>
+                <LineChart
+                    xAxis={[{
+                        data: measurements.map(measurement => measurement.date),
+                        valueFormatter: value => new Date(value * 1000).toLocaleString(),
+                    }]}
+                    series={[{
+                        data: measurements.map(measurement => measurement.temperature),
+                        valueFormatter: value => `${value}°C`,
+                    }]}
+                    height={300}
+                />
 
-            <Paper elevation={2}>
-                <List>
-                    {measurements.map(m => <Measurement measurement={m}/>)}
-                </List>
-            </Paper>
-        </Box>
+                <Paper elevation={2}>
+                    <List>
+                        {measurements.map(m => <Measurement measurement={m}/>)}
+                    </List>
+                </Paper>
+            </Box>
+        </>
     );
 }
 

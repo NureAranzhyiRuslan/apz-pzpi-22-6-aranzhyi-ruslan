@@ -9,10 +9,10 @@ import {
     TableHead,
     TablePagination,
     TableRow,
-    Typography,
 } from "@mui/material";
 import UsersTableItem from "../../components/admin/UsersTableItem.jsx";
 import CenteredTableRow from "../../components/CenteredTableRow.jsx";
+import Navigation from "../../components/Navigation.jsx";
 
 
 function AdminUsersPage() {
@@ -53,52 +53,52 @@ function AdminUsersPage() {
     };
 
     return (
-        <Box p={3}>
-            <Typography variant="h5" mb={2}>
-                Users
-            </Typography>
+        <>
+            <Navigation title="Users"/>
 
-            <Paper>
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>ID</TableCell>
-                            <TableCell>Name</TableCell>
-                            <TableCell>Email</TableCell>
-                            <TableCell align="right">Actions</TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>
-                        {
-                            loading
-                                ? (
-                                    <CenteredTableRow>
-                                        <CircularProgress/>
-                                    </CenteredTableRow>
-                                )
-                                : users.map(user => <UsersTableItem user={user}/>)
-                        }
+            <Box p={3}>
+                <Paper>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>ID</TableCell>
+                                <TableCell>Name</TableCell>
+                                <TableCell>Email</TableCell>
+                                <TableCell align="right">Actions</TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>
+                            {
+                                loading
+                                    ? (
+                                        <CenteredTableRow>
+                                            <CircularProgress/>
+                                        </CenteredTableRow>
+                                    )
+                                    : users.map(user => <UsersTableItem user={user}/>)
+                            }
 
-                        {!loading && users.length === 0 && (
-                            <CenteredTableRow>
-                                No users found.
-                            </CenteredTableRow>
-                        )}
-                    </TableBody>
-                </Table>
+                            {!loading && users.length === 0 && (
+                                <CenteredTableRow>
+                                    No users found.
+                                </CenteredTableRow>
+                            )}
+                        </TableBody>
+                    </Table>
 
-                <TablePagination
-                    component="div"
-                    count={usersCount}
-                    page={page}
-                    onPageChange={handleChangePage}
-                    rowsPerPage={rowsPerPage}
-                    onRowsPerPageChange={handleChangeRowsPerPage}
-                    rowsPerPageOptions={[5, 10, 25, 50]}
-                    disabled={loading}
-                />
-            </Paper>
-        </Box>
+                    <TablePagination
+                        component="div"
+                        count={usersCount}
+                        page={page}
+                        onPageChange={handleChangePage}
+                        rowsPerPage={rowsPerPage}
+                        onRowsPerPageChange={handleChangeRowsPerPage}
+                        rowsPerPageOptions={[5, 10, 25, 50]}
+                        disabled={loading}
+                    />
+                </Paper>
+            </Box>
+        </>
     );
 }
 
