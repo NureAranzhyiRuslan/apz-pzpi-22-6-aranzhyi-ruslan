@@ -1,10 +1,10 @@
 import {Box, IconButton, Menu, MenuItem, Paper, Typography} from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {useNavigate} from "react-router-dom";
 import SensorCreateUpdateDialog from "./SensorCreateUpdateDialog.jsx";
 import {useSnackbar} from "notistack";
-import {apiDeleteSensor} from "../api.js";
+import {apiDeleteSensor, apiGetSensorMeasurements} from "../api.js";
 import {useAppStore} from "../state.js";
 
 function SensorComponent({sensor, onDelete}) {
@@ -12,6 +12,7 @@ function SensorComponent({sensor, onDelete}) {
 
     const [dialogOpen, setDialogOpen] = useState(false);
     const [sensorInfo, setSensorInfo] = useState(sensor);
+    const [measurementsCount, setMeasurementsCount] = useState(null);
 
     const [anchorEl, setAnchorEl] = useState(null);
 
@@ -32,6 +33,14 @@ function SensorComponent({sensor, onDelete}) {
     const handleMenuClose = () => {
         setAnchorEl(null);
     };
+
+    useEffect(() => {
+        (async () => {
+            const sensorMeasurements = await apiGetSensorMeasurements(token, sensor.id, enqueueSnackbar);
+            if(sensorMeasurements)
+                setMeasurementsCount(sensorMeasurements.length);
+        })();
+    }, [])
 
     return (
         <>
@@ -56,7 +65,7 @@ function SensorComponent({sensor, onDelete}) {
                 </Box>
 
                 <Typography variant="body1" fontWeight="bold">
-                    {sensorInfo.recentMeasurements}
+                    {measurementsCount !== null ? measurementsCount : "..."}
                 </Typography>
 
                 <IconButton

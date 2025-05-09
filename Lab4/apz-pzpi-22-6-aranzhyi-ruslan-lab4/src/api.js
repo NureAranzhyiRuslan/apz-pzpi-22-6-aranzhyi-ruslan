@@ -101,6 +101,17 @@ export async function apiCreateSensor(token, name, cityId, enqueueSnackbar) {
     return await parseResp(enqueueSnackbar, resp, "id", "name", "city");
 }
 
+export async function apiGetSensor(token, sensorId, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/sensors/${sensorId}`, {
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token,
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp, "id", "name", "city");
+}
+
 export async function apiUpdateSensor(token, sensorId, name, cityId, enqueueSnackbar) {
     const resp = await fetch(`${API_BASE}/sensors/${sensorId}`, {
         method: "PATCH",
@@ -120,6 +131,17 @@ export async function apiUpdateSensor(token, sensorId, name, cityId, enqueueSnac
 export async function apiDeleteSensor(token, sensorId, enqueueSnackbar) {
     const resp = await fetch(`${API_BASE}/sensors/${sensorId}`, {
         method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token,
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp);
+}
+
+export async function apiGetSensorMeasurements(token, sensorId, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/measurements/${sensorId}`, {
         headers: {
             "Content-Type": "application/json",
             "Authorization": token,
