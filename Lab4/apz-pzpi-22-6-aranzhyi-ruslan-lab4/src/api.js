@@ -5,6 +5,9 @@ async function parseResp(enqueueSnackbar, resp, ...successFields) {
         enqueueSnackbar("Server error! Please try again later!", {variant: "error"});
         return;
     }
+
+    if(resp.status === 204) return true;
+
     const json = await resp.json();
     if (resp.status >= 400) {
         if ("errors" in json)
@@ -58,4 +61,70 @@ export async function apiGetUser(token, enqueueSnackbar) {
     });
 
     return await parseResp(enqueueSnackbar, resp, "id", "role", "first_name");
+}
+
+export async function apiSearchCities(name, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/cities/search`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+            "name": name,
+        }),
+    });
+
+    return await parseResp(enqueueSnackbar, resp);
+}
+
+export async function apiGetSensors(token, page, pageSize, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/sensors?page=${page}&page_size=${pageSize}`, {
+        headers: {"Authorization": token},
+    });
+
+    return await parseResp(enqueueSnackbar, resp, "count", "result");
+}
+
+export async function apiCreateSensor(token, name, cityId, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/sensors`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token,
+        },
+        body: JSON.stringify({
+            "name": name,
+            "city": cityId,
+        }),
+    });
+
+    return await parseResp(enqueueSnackbar, resp, "id", "name", "city");
+}
+
+export async function apiUpdateSensor(token, sensorId, name, cityId, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/sensors/${sensorId}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token,
+        },
+        body: JSON.stringify({
+            "name": name,
+            "city": cityId,
+        }),
+    });
+
+    return await parseResp(enqueueSnackbar, resp, "id", "name", "city");
+}
+
+export async function apiDeleteSensor(token, sensorId, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/sensors/${sensorId}`, {
+        method: "DELETE",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token,
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp);
 }

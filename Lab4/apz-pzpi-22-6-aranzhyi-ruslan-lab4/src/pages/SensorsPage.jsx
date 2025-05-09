@@ -5,10 +5,14 @@ import SensorCreateUpdateDialog from "../components/SensorCreateUpdateDialog.jsx
 import SensorComponent from "../components/SensorComponent.jsx";
 import Navigation from "../components/Navigation.jsx";
 import {useSnackbar} from "notistack";
+import {apiGetSensors} from "../api.js";
+import {useAppStore} from "../state.js";
 
 const PAGE_SIZE = 10;
 
 export default function SensorsPage() {
+    const token = useAppStore(state => state.authToken);
+
     const [sensors, setSensors] = useState([]);
     const [hasMore, setHasMore] = useState(true);
     const [page, setPage] = useState(1);
@@ -17,23 +21,13 @@ export default function SensorsPage() {
 
     const { enqueueSnackbar } = useSnackbar();
 
-    const fetchSensors = async (page) => {
-        const fakeData = Array.from({ length: PAGE_SIZE }, (_, i) => ({
-            id: `sensor-${page}-${i}`,
-            name: `Sensor ${page}-${i}`,
-            city: { id: 1, name: "some city" },
-            recentMeasurements: Math.floor(Math.random() * 100),
-        }));
-        return fakeData;
-    };
-
     const loadMore = async () => {
-        const newSensors = await fetchSensors(page);
-        //setSensors((prev) => [...prev, ...newSensors]);
-        //setPage((p) => p + 1);
-        setSensors([...sensors, ...newSensors]);
+        const newSensors = await apiGetSensors(token, page, PAGE_SIZE, enqueueSnackbar);
+        if(!newSensors) return;
+
+        setSensors([...sensors, ...newSensors.result]);
         setPage(page + 1);
-        if (newSensors.length < PAGE_SIZE) setHasMore(false);
+        if ((sensors.length + newSensors.result.length) >= newSensors.count) setHasMore(false);
     };
 
     useEffect(() => {
@@ -55,7 +49,8 @@ export default function SensorsPage() {
                     dataLength={sensors.length}
                     next={loadMore}
                     hasMore={hasMore}
-                    loader={<Typography>Loading more sensors...</Typography>}
+                    loader={<Typography textAlign="center" variant="h5">Loading more sensors...</Typography>}
+                    endMessage={<Typography textAlign="center" variant="h5">No more sensors are available...</Typography>}
                 >
                     {sensors.map((sensor) => (
                         <SensorComponent
@@ -77,7 +72,6 @@ export default function SensorsPage() {
                     dialogOpen={dialogOpen}
                     setDialogOpen={setDialogOpen}
                     onSensorResult={newSensor => {
-                        console.log("new sensor", newSensor);
                         setSensors((prev) => [newSensor, ...prev]);
                         enqueueSnackbar("Sensor created!", {variant: "success"});
                     }}

@@ -4,8 +4,12 @@ import React, {useState} from "react";
 import {useNavigate} from "react-router-dom";
 import SensorCreateUpdateDialog from "./SensorCreateUpdateDialog.jsx";
 import {useSnackbar} from "notistack";
+import {apiDeleteSensor} from "../api.js";
+import {useAppStore} from "../state.js";
 
 function SensorComponent({sensor, onDelete}) {
+    const token = useAppStore(state => state.authToken);
+
     const [dialogOpen, setDialogOpen] = useState(false);
     const [sensorInfo, setSensorInfo] = useState(sensor);
 
@@ -19,7 +23,8 @@ function SensorComponent({sensor, onDelete}) {
         handleMenuClose();
     };
 
-    const handleDelete = () => {
+    const handleDelete = async () => {
+        await apiDeleteSensor(token, sensor.id, enqueueSnackbar);
         if(onDelete) onDelete();
         handleMenuClose();
     };

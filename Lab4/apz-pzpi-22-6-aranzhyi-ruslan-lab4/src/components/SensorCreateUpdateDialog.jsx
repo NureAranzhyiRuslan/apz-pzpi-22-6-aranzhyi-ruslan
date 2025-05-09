@@ -1,38 +1,34 @@
 import {Autocomplete, Button, Dialog, DialogActions, DialogContent, DialogTitle, TextField} from "@mui/material";
 import React, {useState} from "react";
+import {apiCreateSensor, apiSearchCities, apiUpdateSensor} from "../api.js";
+import {useAppStore} from "../state.js";
+import {useSnackbar} from "notistack";
 
 function SensorCreateUpdateDialog({isCreate, dialogOpen, setDialogOpen, onSensorResult, sensor}) {
+    const token = useAppStore(state => state.authToken);
+
     const [sensorName, setSensorName] = useState(sensor ? sensor.name : "");
     const [selectedCity, setSelectedCity] = useState(sensor ? sensor.city : null);
     const [cityOptions, setCityOptions] = useState([]);
 
+    const { enqueueSnackbar } = useSnackbar();
+
     const handleCitySearch = async (query) => {
-        const fakeCities = [
-            { id: 1, name: "some city" },
-            { id: 2, name: "another city" },
-            { id: 3, name: "idk" },
-        ].filter((c) => c.name.toLowerCase().includes(query.toLowerCase()));
-        setCityOptions(fakeCities);
+        const cities = await apiSearchCities(query.toLowerCase());
+        if(!cities) return;
+        setCityOptions(cities);
     };
 
-    const handleCreateOrEdit = () => {
+    const handleCreateOrEdit = async () => {
         if (!sensorName || !selectedCity) return;
         if (isCreate) {
-            // TODO: create via fetch
-            onSensorResult({
-                id: `sensor-${Date.now()}`,
-                name: sensorName,
-                city: selectedCity,
-                recentMeasurements: 0,
-            });
+            const newSensor = await apiCreateSensor(token, sensorName, selectedCity.id, enqueueSnackbar);
+            if(!newSensor) return;
+            onSensorResult(newSensor);
         } else {
-            // TODO: update via fetch
-            onSensorResult({
-                id: sensor.id,
-                name: sensorName,
-                city: selectedCity,
-                recentMeasurements: 0,
-            });
+            const updSensor = await apiUpdateSensor(token, sensor.id, sensorName, selectedCity.id, enqueueSnackbar);
+            if(!updSensor) return;
+            onSensorResult(updSensor);
         }
         setDialogOpen(false);
     };
