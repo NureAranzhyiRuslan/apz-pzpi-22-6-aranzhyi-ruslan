@@ -150,3 +150,13 @@ export async function apiGetSensorMeasurements(token, sensorId, enqueueSnackbar)
 
     return await parseResp(enqueueSnackbar, resp);
 }
+
+export async function apiGetCityForecast(cityId, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/forecast/city?city=${cityId}`, {
+        headers: {
+            "Content-Type": "application/json",
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp, "info_text", "temperature");
+}

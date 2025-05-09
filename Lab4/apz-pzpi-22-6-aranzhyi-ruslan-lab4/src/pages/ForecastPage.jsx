@@ -1,6 +1,8 @@
 import React, {useState} from "react";
 import {Autocomplete, Box, Button, Stack, TextField, Typography,} from "@mui/material";
 import Navigation from "../components/Navigation.jsx";
+import {apiGetCityForecast, apiSearchCities} from "../api.js";
+import {useSnackbar} from "notistack";
 
 function ForecastPage() {
     const [loading, setLoading] = useState(false);
@@ -9,21 +11,20 @@ function ForecastPage() {
     const [selectedCity, setSelectedCity] = useState(null);
     const [cityOptions, setCityOptions] = useState([]);
 
+    const { enqueueSnackbar } = useSnackbar();
+
     const handleCitySearch = async (query) => {
-        const fakeCities = [
-            { id: 1, name: "some city" },
-            { id: 2, name: "another city" },
-            { id: 3, name: "idk" },
-        ].filter((c) => c.name.toLowerCase().includes(query.toLowerCase()));
-        setCityOptions(fakeCities);
+        const cities = await apiSearchCities(query.toLowerCase());
+        if(!cities) return;
+        setCityOptions(cities);
     };
 
     const fetchForecast = async () => {
+        if(!selectedCity) return enqueueSnackbar("No city selected!", {variant: "warning"});
         setLoading(true);
 
-        // TODO: fetch forecast info via api
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        setTemperature(21);
+        const forecast = await apiGetCityForecast(selectedCity.id, enqueueSnackbar);
+        if(forecast) setTemperature(forecast.temperature);
 
         setLoading(false);
     }
@@ -36,7 +37,7 @@ function ForecastPage() {
                 <Stack spacing={2}>
                     {temperature !== null && (
                         <Typography variant="h5" mb={3} textAlign="center">
-                            Expected temperature: {temperature}
+                            Expected temperature: {temperature.toFixed(2)}
                         </Typography>
                     )}
 
