@@ -10,6 +10,7 @@ import {
 import { useForm } from "react-hook-form";
 import { useSnackbar } from "notistack";
 import {useNavigate} from "react-router-dom";
+import {useAppStore} from "../state.js";
 
 const AuthPage = () => {
     const {
@@ -20,6 +21,9 @@ const AuthPage = () => {
     const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
 
+    const setToken = useAppStore(state => state.setToken);
+    const setUserId = useAppStore(state => state.setUserId);
+
     const onSubmit = async (data) => {
         console.log("Register data:", data);
         await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -27,6 +31,8 @@ const AuthPage = () => {
         // TODO: register
 
         enqueueSnackbar("Registered successfully!", {variant: "success"});
+        setToken("[TODO: actual token]");
+        setUserId(123);
         navigate("/sensors");
     };
 

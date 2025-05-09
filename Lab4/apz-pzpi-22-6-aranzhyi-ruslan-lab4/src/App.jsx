@@ -7,23 +7,50 @@ import AdminUsersPage from "./pages/admin/UsersPage.jsx";
 import AdminUserInfoPage from "./pages/admin/UserInfoPage.jsx";
 import AdminSensorsPage from "./pages/admin/SensorsPage.jsx";
 import AdminSensorInfoPage from "./pages/admin/SensorInfoPage.jsx";
+import {useAppStore} from "./state.js";
+import ForecastPage from "./pages/ForecastPage.jsx";
+
+function AuthGuard({component}) {
+    const token = useAppStore(state => state.authToken);
+    const Component = component;
+
+    if(token !== null)
+        return <Component/>
+
+    return <Navigate to="/login" replace/>;
+}
+
+function NoAuthGuard({component}) {
+    const token = useAppStore(state => state.authToken);
+    const Component = component;
+
+    if(token === null)
+        return <Component/>
+
+    return <Navigate to="/sensors" replace/>;
+}
 
 function App() {
     const def = <Navigate to="/login" replace/>;
 
+    // TODO: /admin/cities
+    // TODO: /admin/cities/:cityId
+    // TODO: /admin/measurements
+    // TODO: /admin/measurements/:measurementId
     return (
         <BrowserRouter>
             <Routes>
                 <Route index path="/" element={def}/>
-                <Route path="/login" element={<AuthPage/>}/>
-                <Route path="/register" element={<RegisterPage/>}/>
-                <Route path="/sensors" element={<SensorsPage/>}/>
-                <Route path="/sensors/:sensorId" element={<SensorInfoPage/>}/>
+                <Route path="/login" element={<NoAuthGuard component={AuthPage}/>}/>
+                <Route path="/register" element={<NoAuthGuard component={RegisterPage}/>}/>
+                <Route path="/sensors" element={<AuthGuard component={SensorsPage}/>}/>
+                <Route path="/sensors/:sensorId" element={<AuthGuard component={SensorInfoPage}/>}/>
+                <Route path="/forecast" element={<AuthGuard component={ForecastPage}/>}/>
 
-                <Route path="/admin/users" element={<AdminUsersPage/>}/>
-                <Route path="/admin/users/:userId" element={<AdminUserInfoPage/>}/>
-                <Route path="/admin/sensors" element={<AdminSensorsPage/>}/>
-                <Route path="/admin/sensors/:sensorId" element={<AdminSensorInfoPage/>}/>
+                <Route path="/admin/users" element={<AuthGuard component={AdminUsersPage}/>}/>
+                <Route path="/admin/users/:userId" element={<AuthGuard component={AdminUserInfoPage}/>}/>
+                <Route path="/admin/sensors" element={<AuthGuard component={AdminSensorsPage}/>}/>
+                <Route path="/admin/sensors/:sensorId" element={<AuthGuard component={AdminSensorInfoPage}/>}/>
 
                 <Route path="*" element={def}/>
             </Routes>
@@ -31,4 +58,4 @@ function App() {
     )
 }
 
-export default App
+export default App;

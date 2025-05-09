@@ -55,6 +55,7 @@ function NavigationDrawer({closeDrawer}) {
                 {role === 999 && <Divider/>}
 
                 {role === 999 && <DrawerListItem key="admin_users" text="(Admin) Users" url="/admin/users" closeDrawer={closeDrawer}/>}
+                {role === 999 && <DrawerListItem key="admin_cities" text="(Admin) Cities" url="/admin/cities" closeDrawer={closeDrawer}/>}
                 {role === 999 && <DrawerListItem key="admin_sensors" text="(Admin) Sensors" url="/admin/sensors" closeDrawer={closeDrawer}/>}
                 {role === 999 && <DrawerListItem key="admin_measurements" text="(Admin) Measurements" url="/admin/measurements" closeDrawer={closeDrawer}/>}
             </List>

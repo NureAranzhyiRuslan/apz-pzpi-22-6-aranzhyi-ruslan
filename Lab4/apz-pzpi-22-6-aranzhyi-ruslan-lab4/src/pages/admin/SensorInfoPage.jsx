@@ -56,6 +56,7 @@ function AdminSensorInfoPage() {
                         onInputChange={(e, value) => handleCitySearch(value)}
                         onChange={(e, value) => setSelectedCity(value)}
                         renderInput={(params) => <TextField {...params} label="City" />}
+                        disabled={loading}
                     />
 
                     <Stack direction="row" spacing={2}>
