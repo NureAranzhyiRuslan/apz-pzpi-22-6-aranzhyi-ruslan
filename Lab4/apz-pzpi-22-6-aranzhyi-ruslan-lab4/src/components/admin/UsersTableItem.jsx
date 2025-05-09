@@ -8,7 +8,8 @@ function UsersTableItem({user}) {
     return (
         <TableRow key={user.id}>
             <TableCell>{user.id}</TableCell>
-            <TableCell>{user.name}</TableCell>
+            <TableCell>{user.first_name}</TableCell>
+            <TableCell>{user.last_name}</TableCell>
             <TableCell>{user.email}</TableCell>
             <TableCell align="right">
                 <Button

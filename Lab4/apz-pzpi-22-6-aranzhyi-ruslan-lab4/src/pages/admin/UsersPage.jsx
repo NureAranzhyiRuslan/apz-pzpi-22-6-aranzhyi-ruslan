@@ -13,9 +13,14 @@ import {
 import UsersTableItem from "../../components/admin/UsersTableItem.jsx";
 import CenteredTableRow from "../../components/CenteredTableRow.jsx";
 import Navigation from "../../components/Navigation.jsx";
+import {apiAdminGetUsers} from "../../api.js";
+import {useAppStore} from "../../state.js";
+import {useSnackbar} from "notistack";
 
 
 function AdminUsersPage() {
+    const token = useAppStore(state => state.authToken);
+
     const [users, setUsers] = useState([]);
     const [usersCount, setUsersCount] = useState(0);
 
@@ -23,19 +28,16 @@ function AdminUsersPage() {
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [loading, setLoading] = useState(false);
 
+    const { enqueueSnackbar } = useSnackbar();
+
     const fetchUsers = async () => {
-        // TODO: fetch via api
         setLoading(true);
-        const fakeUsers = Array.from({ length: rowsPerPage }, (_, i) => ({
-            id: rowsPerPage * page + i,
-            name: `User ${rowsPerPage * page + i}`,
-            email: `user${rowsPerPage * page + i}@example.com`,
-        }));
 
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        const usersResp = await apiAdminGetUsers(token, page, rowsPerPage, enqueueSnackbar);
+        if(!usersResp) return setLoading(false);
 
-        setUsers(fakeUsers);
-        setUsersCount(125);
+        setUsers(usersResp.result);
+        setUsersCount(usersResp.count);
         setLoading(false);
     }
 
@@ -62,7 +64,8 @@ function AdminUsersPage() {
                         <TableHead>
                             <TableRow>
                                 <TableCell>ID</TableCell>
-                                <TableCell>Name</TableCell>
+                                <TableCell>First Name</TableCell>
+                                <TableCell>Last Name</TableCell>
                                 <TableCell>Email</TableCell>
                                 <TableCell align="right">Actions</TableCell>
                             </TableRow>

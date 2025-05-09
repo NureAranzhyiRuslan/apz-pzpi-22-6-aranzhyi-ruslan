@@ -132,7 +132,6 @@ export async function apiDeleteSensor(token, sensorId, enqueueSnackbar) {
     const resp = await fetch(`${API_BASE}/sensors/${sensorId}`, {
         method: "DELETE",
         headers: {
-            "Content-Type": "application/json",
             "Authorization": token,
         },
     });
@@ -143,7 +142,6 @@ export async function apiDeleteSensor(token, sensorId, enqueueSnackbar) {
 export async function apiGetSensorMeasurements(token, sensorId, enqueueSnackbar) {
     const resp = await fetch(`${API_BASE}/measurements/${sensorId}`, {
         headers: {
-            "Content-Type": "application/json",
             "Authorization": token,
         },
     });
@@ -152,11 +150,55 @@ export async function apiGetSensorMeasurements(token, sensorId, enqueueSnackbar)
 }
 
 export async function apiGetCityForecast(cityId, enqueueSnackbar) {
-    const resp = await fetch(`${API_BASE}/forecast/city?city=${cityId}`, {
+    const resp = await fetch(`${API_BASE}/forecast/city?city=${cityId}`);
+
+    return await parseResp(enqueueSnackbar, resp, "info_text", "temperature");
+}
+
+export async function apiAdminGetUsers(token, page, pageSize, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/users?page=${page}&page_size=${pageSize}`, {
         headers: {
-            "Content-Type": "application/json",
+            "Authorization": token,
         },
     });
 
-    return await parseResp(enqueueSnackbar, resp, "info_text", "temperature");
+    return await parseResp(enqueueSnackbar, resp, "count", "result");
+}
+
+export async function apiAdminGetUser(token, userId, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/users/${userId}`, {
+        headers: {
+            "Authorization": token,
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp, "id", "email", "first_name", "last_name");
+}
+
+export async function apiAdminUpdateUser(token, userId, firstName, lastName, email, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/users/${userId}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token,
+        },
+        body: JSON.stringify({
+            "first_name": firstName,
+            "last_name": lastName,
+            "email": email,
+        }),
+    });
+
+    return await parseResp(enqueueSnackbar, resp, "id", "email", "first_name", "last_name");
+}
+
+export async function apiAdminDeleteUser(token, userId, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/users/${userId}`, {
+        method: "DELETE",
+        headers: {
+            "Authorization": token,
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp);
 }

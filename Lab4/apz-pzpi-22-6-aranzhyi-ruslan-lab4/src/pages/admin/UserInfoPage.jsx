@@ -1,35 +1,62 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {Box, Button, Stack, TextField,} from "@mui/material";
 import {useNavigate, useParams} from "react-router-dom";
 import {useSnackbar} from "notistack";
 import Navigation from "../../components/Navigation.jsx";
+import {apiAdminDeleteUser, apiAdminGetUser, apiAdminUpdateUser} from "../../api.js";
+import {useAppStore} from "../../state.js";
 
 function AdminUserInfoPage() {
+    const token = useAppStore(state => state.authToken);
     const { userId } = useParams();
 
-    // TODO: fetch user info via api
+    const [user, setUser] = useState(null);
+    const [userFirst, setUserFirst] = useState(null);
+    const [userLast, setUserLast] = useState(null);
+    const [userEmail, setUserEmail] = useState(null);
 
     const [loading, setLoading] = useState(false);
     const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
 
-    // TODO: fetch sensor info via api
+    useEffect(() => {
+        (async () => {
+            setLoading(true);
+            const userInfo = await apiAdminGetUser(token, userId, enqueueSnackbar);
+            if(!userInfo) return;
+            setUser(userInfo);
+            setUserFirst(userInfo.first_name);
+            setUserLast(userInfo.last_name);
+            setUserEmail(userInfo.email);
+
+            setLoading(false)
+        })();
+    }, [userId]);
 
     const saveUser = async () => {
         setLoading(true);
-        // TODO: delete user
-        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        const updUser = await apiAdminUpdateUser(token, user.id, userFirst, userLast, userEmail, enqueueSnackbar);
+        if(updUser) {
+            setUser(updUser);
+            setUserFirst(updUser.first_name);
+            setUserLast(updUser.last_name);
+            setUserEmail(updUser.email);
+            enqueueSnackbar("User info updated!", {variant: "info"});
+        }
+
         setLoading(false);
-        enqueueSnackbar("User info updated!", {variant: "info"});
     }
 
     const deleteUser = async () => {
         setLoading(true);
-        // TODO: delete user
-        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        if(await apiAdminDeleteUser(token, user.id, enqueueSnackbar)) {
+            enqueueSnackbar("User deleted!", {variant: "info"});
+            navigate("/admin/users");
+        }
+
         setLoading(false);
-        enqueueSnackbar("User deleted!", {variant: "info"});
-        navigate("/admin/users");
     }
 
     return (
@@ -38,8 +65,9 @@ function AdminUserInfoPage() {
 
             <Box p={3}>
                 <Stack spacing={2} maxWidth={400}>
-                    <TextField label="Name" defaultValue="User name" disabled={loading} />
-                    <TextField label="Email" defaultValue="user@example.com" disabled={loading} />
+                    <TextField label="First Name" value={userFirst ? userFirst : ""} disabled={loading} onChange={(e) => setUserFirst(e.target.value)} />
+                    <TextField label="Last Name" value={userLast ? userLast : ""} disabled={loading} onChange={(e) => setUserLast(e.target.value)} />
+                    <TextField label="Email" value={userEmail ? userEmail : ""} disabled={loading} onChange={(e) => setUserEmail(e.target.value)} />
 
                     <Stack direction="row" spacing={2}>
                         <Button variant="contained" color="primary" onClick={saveUser} disabled={loading}>
