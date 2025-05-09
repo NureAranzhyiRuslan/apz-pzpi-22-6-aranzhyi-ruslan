@@ -9,6 +9,8 @@ import AdminSensorsPage from "./pages/admin/SensorsPage.jsx";
 import AdminSensorInfoPage from "./pages/admin/SensorInfoPage.jsx";
 import {useAppStore} from "./state.js";
 import ForecastPage from "./pages/ForecastPage.jsx";
+import AdminCitiesPage from "./pages/admin/CitiesPage.jsx";
+import AdminCityInfoPage from "./pages/admin/CityInfoPage.jsx";
 
 function AuthGuard({component}) {
     const token = useAppStore(state => state.authToken);
@@ -33,8 +35,6 @@ function NoAuthGuard({component}) {
 function App() {
     const def = <Navigate to="/login" replace/>;
 
-    // TODO: /admin/cities
-    // TODO: /admin/cities/:cityId
     // TODO: /admin/measurements
     // TODO: /admin/measurements/:measurementId
     return (
@@ -49,6 +49,8 @@ function App() {
 
                 <Route path="/admin/users" element={<AuthGuard component={AdminUsersPage}/>}/>
                 <Route path="/admin/users/:userId" element={<AuthGuard component={AdminUserInfoPage}/>}/>
+                <Route path="/admin/cities" element={<AuthGuard component={AdminCitiesPage}/>}/>
+                <Route path="/admin/cities/:cityId" element={<AuthGuard component={AdminCityInfoPage}/>}/>
                 <Route path="/admin/sensors" element={<AuthGuard component={AdminSensorsPage}/>}/>
                 <Route path="/admin/sensors/:sensorId" element={<AuthGuard component={AdminSensorInfoPage}/>}/>
 
