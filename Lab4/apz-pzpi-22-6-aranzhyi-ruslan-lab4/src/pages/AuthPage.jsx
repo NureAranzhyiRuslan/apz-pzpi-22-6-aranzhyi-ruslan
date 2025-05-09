@@ -1,16 +1,10 @@
 import React from "react";
-import {
-    Box,
-    Button,
-    Paper,
-    TextField,
-    Typography,
-    CircularProgress, Link,
-} from "@mui/material";
-import { useForm } from "react-hook-form";
-import { useSnackbar } from "notistack";
+import {Box, Button, CircularProgress, Link, Paper, TextField, Typography,} from "@mui/material";
+import {useForm} from "react-hook-form";
+import {useSnackbar} from "notistack";
 import {useNavigate} from "react-router-dom";
 import {useAppStore} from "../state.js";
+import {apiGetUser, apiLogin} from "../api.js";
 
 const AuthPage = () => {
     const {
@@ -23,16 +17,24 @@ const AuthPage = () => {
 
     const setToken = useAppStore(state => state.setToken);
     const setUserId = useAppStore(state => state.setUserId);
+    const setRole = useAppStore(state => state.setRole);
+    const setUserName = useAppStore(state => state.setUserName);
 
     const onSubmit = async (data) => {
-        console.log("Login data:", data);
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+        const loginJson = await apiLogin(data.email, data.password, enqueueSnackbar);
+        if(!loginJson)
+            return;
 
-        // TODO: login
+        const userInfoJson = await apiGetUser(loginJson.token);
+        if(!userInfoJson)
+            return;
+
+        setToken(loginJson.token);
+        setUserId(userInfoJson.id);
+        setRole(userInfoJson.role);
+        setUserName(userInfoJson.first_name);
 
         enqueueSnackbar("Logged in successfully!", {variant: "success"});
-        setToken("[TODO: actual token]");
-        setUserId(123);
         navigate("/sensors");
     };
 

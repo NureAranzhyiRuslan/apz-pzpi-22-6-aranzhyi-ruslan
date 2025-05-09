@@ -35,8 +35,6 @@ function NoAuthGuard({component}) {
 function App() {
     const def = <Navigate to="/login" replace/>;
 
-    // TODO: /admin/measurements
-    // TODO: /admin/measurements/:measurementId
     return (
         <BrowserRouter>
             <Routes>

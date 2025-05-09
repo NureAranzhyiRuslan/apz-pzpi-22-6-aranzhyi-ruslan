@@ -1,16 +1,10 @@
 import React from "react";
-import {
-    Box,
-    Button,
-    Paper,
-    TextField,
-    Typography,
-    CircularProgress, Link,
-} from "@mui/material";
-import { useForm } from "react-hook-form";
-import { useSnackbar } from "notistack";
+import {Box, Button, CircularProgress, Link, Paper, TextField, Typography,} from "@mui/material";
+import {useForm} from "react-hook-form";
+import {useSnackbar} from "notistack";
 import {useNavigate} from "react-router-dom";
 import {useAppStore} from "../state.js";
+import {apiGetUser, apiRegister} from "../api.js";
 
 const AuthPage = () => {
     const {
@@ -23,16 +17,29 @@ const AuthPage = () => {
 
     const setToken = useAppStore(state => state.setToken);
     const setUserId = useAppStore(state => state.setUserId);
+    const setRole = useAppStore(state => state.setRole);
+    const setUserName = useAppStore(state => state.setUserName);
 
     const onSubmit = async (data) => {
-        console.log("Register data:", data);
-        await new Promise((resolve) => setTimeout(resolve, 5000));
+        if(data.password !== data.password_repeat) {
+            enqueueSnackbar("Passwords do not match!", {variant: "warning"});
+            return;
+        }
 
-        // TODO: register
+        const registerJson = await apiRegister(data.email, data.password, data.first_name, data.last_name, enqueueSnackbar);
+        if(!registerJson)
+            return;
+
+        const userInfoJson = await apiGetUser(registerJson.token);
+        if(!userInfoJson)
+            return;
+
+        setToken(registerJson.token);
+        setUserId(userInfoJson.id);
+        setRole(userInfoJson.role);
+        setUserName(userInfoJson.first_name);
 
         enqueueSnackbar("Registered successfully!", {variant: "success"});
-        setToken("[TODO: actual token]");
-        setUserId(123);
         navigate("/sensors");
     };
 

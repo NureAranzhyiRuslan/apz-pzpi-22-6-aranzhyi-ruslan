@@ -68,6 +68,7 @@ function Navigation({title}) {
     const [mobileOpen, setMobileOpen] = useState(false);
     const navigate = useNavigate();
 
+    const userName = useAppStore((state) => state.userName);
     const logOut = useAppStore((state) => state.logOut);
 
     const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
@@ -92,7 +93,7 @@ function Navigation({title}) {
                     <Menu anchorEl={anchorEl} anchorOrigin={{vertical: "top", horizontal: 'right'}} keepMounted
                           transformOrigin={{vertical: "top", horizontal: "right"}} open={Boolean(anchorEl)}
                           onClose={handleMenuClose}>
-                        <MenuItem disabled={true}>Hi, [TODO: user name]</MenuItem>
+                        <MenuItem disabled={true}>Hi, {userName}</MenuItem>
                         <MenuItem onClick={() => {
                             logOut();
                             handleMenuClose();

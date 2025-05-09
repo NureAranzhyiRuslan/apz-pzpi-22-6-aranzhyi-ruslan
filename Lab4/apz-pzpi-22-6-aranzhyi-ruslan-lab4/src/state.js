@@ -6,11 +6,13 @@ export const useAppStore = create(
         (set) => ({
             authToken: null,
             userId: null,
+            userName: null,
             role: 0,
             setToken: (token) => set({authToken: token}),
             setUserId: (userId) => set({userId: userId}),
             setRole: (role) => set({role: role}),
-            logOut: () => set({authToken: null, userId: null, role: 0}),
+            setUserName: (name) => set({userName: name}),
+            logOut: () => set({authToken: null, userId: null, userName: null, role: 0}),
         }),
         {name: "apz-storage"},
     )
