@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
 import {
     Box,
+    Button,
     CircularProgress,
     Paper,
     Table,
@@ -13,35 +14,39 @@ import {
 import CitiesTableItem from "../../components/admin/CitiesTableItem.jsx";
 import CenteredTableRow from "../../components/CenteredTableRow.jsx";
 import Navigation from "../../components/Navigation.jsx";
+import {useAppStore} from "../../state.js";
+import {useSnackbar} from "notistack";
+import {apiAdminGetCities} from "../../api.js";
+import CityCreateDialog from "../../components/CityCreateDialog.jsx";
 
 function AdminCitiesPage() {
+    const token = useAppStore(state => state.authToken);
+
     const [cities, setCities] = useState([]);
     const [citiesCount, setCitiesCount] = useState(0);
 
     const [page, setPage] = useState(0);
     const [rowsPerPage, setRowsPerPage] = useState(5);
+    const [_reloadTrigger, _setReloadTrigger] = useState(0);
     const [loading, setLoading] = useState(false);
 
-    const fetchCities = async () => {
-        // TODO: fetch via api
+    const { enqueueSnackbar } = useSnackbar();
+    const [dialogOpen, setDialogOpen] = useState(false);
+
+    const fetchUsers = async () => {
         setLoading(true);
-        const fakeCities = Array.from({ length: rowsPerPage }, (_, i) => ({
-            id: rowsPerPage * page + i,
-            name: `City ${rowsPerPage * page + i}`,
-            latitude: (Math.random() * 180).toFixed(6),
-            longitude: (Math.random() * 180).toFixed(6),
-        }));
 
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        const citiesResp = await apiAdminGetCities(token, page + 1, rowsPerPage, enqueueSnackbar);
+        if(!citiesResp) return setLoading(false);
 
-        setCities(fakeCities);
-        setCitiesCount(125);
+        setCities(citiesResp.result);
+        setCitiesCount(citiesResp.count);
         setLoading(false);
     }
 
     useEffect(() => {
-        fetchCities();
-    }, [page, rowsPerPage]);
+        fetchUsers();
+    }, [page, rowsPerPage, _reloadTrigger]);
 
     const handleChangePage = (event, newPage) => {
         setPage(newPage);
@@ -57,6 +62,12 @@ function AdminCitiesPage() {
             <Navigation title="Cities"/>
 
             <Box p={3}>
+                <Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+                    <Button variant="contained" onClick={() => setDialogOpen(true)}>
+                        Add City
+                    </Button>
+                </Box>
+
                 <Paper>
                     <Table>
                         <TableHead>
@@ -98,6 +109,12 @@ function AdminCitiesPage() {
                         disabled={loading}
                     />
                 </Paper>
+
+                <CityCreateDialog
+                    dialogOpen={dialogOpen}
+                    setDialogOpen={setDialogOpen}
+                    onSensorResult={() => _setReloadTrigger(prev => prev + 1)}
+                />
             </Box>
         </>
     );

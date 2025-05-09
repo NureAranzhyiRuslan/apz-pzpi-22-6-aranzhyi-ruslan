@@ -32,7 +32,7 @@ function AdminSensorsPage() {
     const fetchSensors = async () => {
         setLoading(true);
 
-        const sensorsResp = await apiAdminGetSensors(token, page, rowsPerPage, enqueueSnackbar);
+        const sensorsResp = await apiAdminGetSensors(token, page + 1, rowsPerPage, enqueueSnackbar);
         if(!sensorsResp) return setLoading(false);
 
         setSensors(sensorsResp.result);

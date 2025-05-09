@@ -249,3 +249,68 @@ export async function apiAdminDeleteSensor(token, sensorId, enqueueSnackbar) {
 
     return await parseResp(enqueueSnackbar, resp);
 }
+
+export async function apiAdminGetCities(token, page, pageSize, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/cities?page=${page}&page_size=${pageSize}`, {
+        headers: {
+            "Authorization": token,
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp, "count", "result");
+}
+
+export async function apiAdminGetCity(token, cityId, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/cities/${cityId}`, {
+        headers: {
+            "Authorization": token,
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp, "id", "name", "latitude", "longitude");
+}
+
+export async function apiAdminUpdateCity(token, cityId, name, latitude, longitude, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/cities/${cityId}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token,
+        },
+        body: JSON.stringify({
+            "name": name,
+            "latitude": latitude,
+            "longitude": longitude,
+        }),
+    });
+
+    return await parseResp(enqueueSnackbar, resp, "id", "name", "latitude", "longitude");
+}
+
+export async function apiAdminDeleteCity(token, sensorId, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/cities/${sensorId}`, {
+        method: "DELETE",
+        headers: {
+            "Authorization": token,
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp);
+}
+
+export async function apiAdminCreateCity(token, name, latitude, longitude, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/cities`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token,
+        },
+        body: JSON.stringify({
+            "name": name,
+            "latitude": latitude,
+            "longitude": longitude,
+        }),
+    });
+
+    return await parseResp(enqueueSnackbar, resp, "id", "name", "latitude", "longitude");
+}

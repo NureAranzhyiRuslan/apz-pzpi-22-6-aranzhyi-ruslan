@@ -33,7 +33,7 @@ function AdminUsersPage() {
     const fetchUsers = async () => {
         setLoading(true);
 
-        const usersResp = await apiAdminGetUsers(token, page, rowsPerPage, enqueueSnackbar);
+        const usersResp = await apiAdminGetUsers(token, page + 1, rowsPerPage, enqueueSnackbar);
         if(!usersResp) return setLoading(false);
 
         setUsers(usersResp.result);
