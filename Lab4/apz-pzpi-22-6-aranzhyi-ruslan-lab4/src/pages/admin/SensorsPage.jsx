@@ -13,8 +13,13 @@ import {
 import SensorsTableItem from "../../components/admin/SensorsTableItem.jsx";
 import CenteredTableRow from "../../components/CenteredTableRow.jsx";
 import Navigation from "../../components/Navigation.jsx";
+import {useSnackbar} from "notistack";
+import {useAppStore} from "../../state.js";
+import {apiAdminGetSensors} from "../../api.js";
 
 function AdminSensorsPage() {
+    const token = useAppStore(state => state.authToken);
+
     const [sensors, setSensors] = useState([]);
     const [sensorsCount, setSensorsCount] = useState(0);
 
@@ -22,26 +27,16 @@ function AdminSensorsPage() {
     const [rowsPerPage, setRowsPerPage] = useState(5);
     const [loading, setLoading] = useState(false);
 
+    const { enqueueSnackbar } = useSnackbar();
+
     const fetchSensors = async () => {
-        // TODO: fetch via api
         setLoading(true);
-        const fakeSensors = Array.from({ length: rowsPerPage }, (_, i) => ({
-            id: rowsPerPage * page + i,
-            name: `Sensor ${rowsPerPage * page + i}`,
-            city: {
-                id: 123,
-                name: "idk",
-            },
-            owner: {
-                id: 1,
-                email: "some_user@example.com",
-            },
-        }));
 
-        await new Promise(resolve => setTimeout(resolve, 1500));
+        const sensorsResp = await apiAdminGetSensors(token, page, rowsPerPage, enqueueSnackbar);
+        if(!sensorsResp) return setLoading(false);
 
-        setSensors(fakeSensors);
-        setSensorsCount(125);
+        setSensors(sensorsResp.result);
+        setSensorsCount(sensorsResp.count);
         setLoading(false);
     }
 

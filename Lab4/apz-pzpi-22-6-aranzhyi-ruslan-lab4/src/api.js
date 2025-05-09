@@ -202,3 +202,50 @@ export async function apiAdminDeleteUser(token, userId, enqueueSnackbar) {
 
     return await parseResp(enqueueSnackbar, resp);
 }
+
+export async function apiAdminGetSensors(token, page, pageSize, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/sensors?page=${page}&page_size=${pageSize}`, {
+        headers: {
+            "Authorization": token,
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp, "count", "result");
+}
+
+export async function apiAdminGetSensor(token, sensorId, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/sensors/${sensorId}`, {
+        headers: {
+            "Authorization": token,
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp, "id", "name", "city", "owner");
+}
+
+export async function apiAdminUpdateSensor(token, sensorId, name, cityId, email, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/sensors/${sensorId}`, {
+        method: "PATCH",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token,
+        },
+        body: JSON.stringify({
+            "name": name,
+            "city": cityId,
+        }),
+    });
+
+    return await parseResp(enqueueSnackbar, resp, "id", "name", "city", "owner");
+}
+
+export async function apiAdminDeleteSensor(token, sensorId, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/sensors/${sensorId}`, {
+        method: "DELETE",
+        headers: {
+            "Authorization": token,
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp);
+}

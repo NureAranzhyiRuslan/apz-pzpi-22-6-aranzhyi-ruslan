@@ -10,7 +10,7 @@ function SensorsTableItem({sensor}) {
             <TableCell>{sensor.id}</TableCell>
             <TableCell>{sensor.name}</TableCell>
             <TableCell>{sensor.city.name}</TableCell>
-            <TableCell>{sensor.owner.email}</TableCell>
+            <TableCell>{sensor.owner ? sensor.owner.email : "-"}</TableCell>
             <TableCell align="right">
                 <Button
                     variant="outlined"

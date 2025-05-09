@@ -1,45 +1,67 @@
-import React, {useState} from "react";
+import React, {useEffect, useState} from "react";
 import {Autocomplete, Box, Button, Stack, TextField,} from "@mui/material";
 import {useNavigate, useParams} from "react-router-dom";
 import {useSnackbar} from "notistack";
 import Navigation from "../../components/Navigation.jsx";
+import {apiAdminDeleteSensor, apiAdminGetSensor, apiAdminUpdateSensor, apiSearchCities} from "../../api.js";
+import {useAppStore} from "../../state.js";
 
 function AdminSensorInfoPage() {
+    const token = useAppStore(state => state.authToken);
     const { sensorId } = useParams();
     const [loading, setLoading] = useState(false);
 
-    const [selectedCity, setSelectedCity] = useState(null);
+    const [sensor, setSensor] = useState(null);
+    const [sensorName, setSensorName] = useState(null);
+    const [sensorCity, setSensorCity] = useState(null);
+
     const [cityOptions, setCityOptions] = useState([]);
 
     const { enqueueSnackbar } = useSnackbar();
     const navigate = useNavigate();
 
-    const handleCitySearch = async (query) => {
-        const fakeCities = [
-            { id: 1, name: "some city" },
-            { id: 2, name: "another city" },
-            { id: 3, name: "idk" },
-        ].filter((c) => c.name.toLowerCase().includes(query.toLowerCase()));
-        setCityOptions(fakeCities);
-    };
+    useEffect(() => {
+        (async () => {
+            setLoading(true);
+            const sensorInfo = await apiAdminGetSensor(token, sensorId, enqueueSnackbar);
+            if(!sensorInfo) return;
+            setSensor(sensorInfo);
+            setSensorName(sensorInfo.name);
+            setSensorCity(sensorInfo.city);
 
-    // TODO: fetch sensor info via api
+            setLoading(false)
+        })();
+    }, [sensorId]);
+
+    const handleCitySearch = async (query) => {
+        const cities = await apiSearchCities(query.toLowerCase());
+        if(!cities) return;
+        setCityOptions(cities);
+    };
 
     const saveSensor = async () => {
         setLoading(true);
-        // TODO: delete sensor
-        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        const updSensor = await apiAdminUpdateSensor(token, sensor.id, sensorName, sensorCity.id, enqueueSnackbar);
+        if(updSensor) {
+            setSensor(updSensor);
+            setSensorName(updSensor.name);
+            setSensorCity(updSensor.city);
+            enqueueSnackbar("Sensor info updated!", {variant: "info"});
+        }
+
         setLoading(false);
-        enqueueSnackbar("Sensor info updated!", {variant: "info"});
     }
 
     const deleteSensor = async () => {
         setLoading(true);
-        // TODO: delete sensor
-        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        if(await apiAdminDeleteSensor(token, sensor.id, enqueueSnackbar)) {
+            enqueueSnackbar("Sensor deleted!", {variant: "info"});
+            navigate("/admin/sensors");
+        }
+
         setLoading(false);
-        enqueueSnackbar("Sensor deleted!", {variant: "info"});
-        navigate("/admin/sensors");
     }
 
     return (
@@ -48,13 +70,14 @@ function AdminSensorInfoPage() {
 
             <Box p={3}>
                 <Stack spacing={2} maxWidth={400}>
-                    <TextField label="Name" defaultValue="Sensor name" disabled={loading} />
+                    <TextField label="Api Key" value={sensor ? sensor.secret_key : ""} disabled />
+                    <TextField label="Name" value={sensorName ? sensorName : ""} disabled={loading} onChange={(e) => setSensorName(e.target.value)} />
                     <Autocomplete
                         options={cityOptions}
                         getOptionLabel={(option) => option.name}
-                        value={selectedCity}
+                        value={sensorCity}
                         onInputChange={(e, value) => handleCitySearch(value)}
-                        onChange={(e, value) => setSelectedCity(value)}
+                        onChange={(e, value) => setSensorCity(value)}
                         renderInput={(params) => <TextField {...params} label="City" />}
                         disabled={loading}
                     />
