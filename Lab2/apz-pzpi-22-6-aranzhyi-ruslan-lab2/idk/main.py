@@ -3,6 +3,7 @@ from pathlib import Path
 
 from aerich import Command
 from fastapi import FastAPI
+from fastapi.exceptions import RequestValidationError
 from starlette.middleware.cors import CORSMiddleware
 from starlette.responses import JSONResponse
 from tortoise import Tortoise
@@ -67,3 +68,17 @@ async def custom_message_exception_handler(_, exc: CustomMessageException) -> JS
     return JSONResponse({
         "errors": exc.messages,
     }, status_code=exc.status_code)
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(_, exc: RequestValidationError) -> JSONResponse:
+    result = []
+    for err in exc.errors():
+        loc = ".".join([str(l) for l in err["loc"][1:]])
+        if loc:
+            loc = f"[{loc}] "
+        result.append(f"{loc}{err['msg']}")
+
+    return JSONResponse({
+        "errors": result,
+    }, status_code=422)

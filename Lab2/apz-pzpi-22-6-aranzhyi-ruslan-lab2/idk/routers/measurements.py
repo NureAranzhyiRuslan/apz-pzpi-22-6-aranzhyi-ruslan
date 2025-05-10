@@ -16,6 +16,6 @@ async def add_measurement(sensor: SensorAuthDep, data: AddMeasurementRequest):
 async def get_last_sensor_measurements(sensor: SensorDep):
     measurements = await Measurement.filter(sensor=sensor).order_by("-id").limit(100)
     return [
-        measurement.to_json()
+        await measurement.to_json()
         for measurement in measurements
     ]

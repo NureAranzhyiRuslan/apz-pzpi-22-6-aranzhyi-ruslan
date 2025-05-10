@@ -14,14 +14,26 @@ class Sensor(Model):
     city: models.City = fields.ForeignKeyField("models.City")
     name: str = fields.CharField(max_length=64)
 
-    async def to_json(self) -> dict:
+    owner_id: int
+
+    async def to_json(self, full: bool = False) -> dict:
+        to_fetch = []
         if not isinstance(self.city, models.City):
-            await self.fetch_related("city")
-        if not isinstance(self.owner, models.User):
-            await self.fetch_related("owner")
-        return {
+            to_fetch.append("city")
+        if self.owner is not None and full:
+            to_fetch.append("owner")
+
+        if to_fetch:
+            await self.fetch_related(*to_fetch)
+
+        data = {
             "id": self.id,
-            "secret_key": f"{self.owner.id}:{self.id}:{self.secret_key}",
+            "secret_key": f"{self.owner_id or 0}:{self.id}:{self.secret_key}",
             "city": self.city.to_json(),
             "name": self.name,
         }
+
+        if full:
+            data["owner"] = self.owner.to_json() if self.owner is not None else None
+
+        return data

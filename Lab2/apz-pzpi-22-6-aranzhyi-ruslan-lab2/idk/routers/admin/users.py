@@ -4,7 +4,7 @@ from idk.dependencies import JwtAuthAdminDepN
 from idk.models import User, Sensor
 from idk.schemas.common import PaginationResponse, PaginationQuery
 from idk.schemas.sensors import SensorInfo
-from idk.schemas.user import UserInfoResponse
+from idk.schemas.user import UserInfoResponse, AdminUserInfoEditRequest
 from idk.utils.custom_exception import CustomMessageException
 
 router = APIRouter(prefix="/users")
@@ -29,6 +29,17 @@ async def get_users(query: PaginationQuery = Query()):
 async def get_user(user_id: int):
     if (user := await User.get_or_none(id=user_id)) is None:
         raise CustomMessageException("Unknown user.", 404)
+
+    return user.to_json()
+
+
+@router.patch("/{user_id}", dependencies=[JwtAuthAdminDepN], response_model=UserInfoResponse)
+async def update_user(user_id: int, data: AdminUserInfoEditRequest):
+    if (user := await User.get_or_none(id=user_id)) is None:
+        raise CustomMessageException("Unknown user.", 404)
+
+    if update_fields := data.model_dump(exclude_defaults=True):
+        await user.update_from_dict(update_fields).save(update_fields=list(update_fields.keys()))
 
     return user.to_json()
 

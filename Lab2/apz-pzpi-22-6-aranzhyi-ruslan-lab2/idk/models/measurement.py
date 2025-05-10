@@ -14,9 +14,16 @@ class Measurement(Model):
     pressure: float = fields.FloatField()
     time: datetime = fields.DatetimeField(auto_now_add=True)
 
-    def to_json(self) -> dict:
-        return {
+    async def to_json(self, full: bool = False) -> dict:
+        data = {
             "temperature": self.temperature,
             "pressure": self.pressure,
             "timestamp": int(self.time.timestamp()),
         }
+
+        if full:
+            data["id"] = self.id
+            self.sensor = await self.sensor
+            data["sensor"] = await self.sensor.to_json(full=True)
+
+        return data
