@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from "react";
-import {Box, Button, Stack, TextField,} from "@mui/material";
+import {Box, Button, MenuItem, Select, Stack, TextField,} from "@mui/material";
 import {useNavigate, useParams} from "react-router-dom";
 import {useSnackbar} from "notistack";
 import Navigation from "../../components/Navigation.jsx";
@@ -14,6 +14,7 @@ function AdminUserInfoPage() {
     const [userFirst, setUserFirst] = useState(null);
     const [userLast, setUserLast] = useState(null);
     const [userEmail, setUserEmail] = useState(null);
+    const [userRole, setUserRole] = useState(null);
 
     const [loading, setLoading] = useState(false);
     const { enqueueSnackbar } = useSnackbar();
@@ -28,6 +29,7 @@ function AdminUserInfoPage() {
             setUserFirst(userInfo.first_name);
             setUserLast(userInfo.last_name);
             setUserEmail(userInfo.email);
+            setUserRole(userInfo.role);
 
             setLoading(false)
         })();
@@ -36,12 +38,13 @@ function AdminUserInfoPage() {
     const saveUser = async () => {
         setLoading(true);
 
-        const updUser = await apiAdminUpdateUser(token, user.id, userFirst, userLast, userEmail, enqueueSnackbar);
+        const updUser = await apiAdminUpdateUser(token, user.id, userFirst, userLast, userEmail, userRole, enqueueSnackbar);
         if(updUser) {
             setUser(updUser);
             setUserFirst(updUser.first_name);
             setUserLast(updUser.last_name);
             setUserEmail(updUser.email);
+            setUserRole(updUser.role);
             enqueueSnackbar("User info updated!", {variant: "info"});
         }
 
@@ -68,6 +71,10 @@ function AdminUserInfoPage() {
                     <TextField label="First Name" value={userFirst ? userFirst : ""} disabled={loading} onChange={(e) => setUserFirst(e.target.value)} />
                     <TextField label="Last Name" value={userLast ? userLast : ""} disabled={loading} onChange={(e) => setUserLast(e.target.value)} />
                     <TextField label="Email" value={userEmail ? userEmail : ""} disabled={loading} onChange={(e) => setUserEmail(e.target.value)} />
+                    <Select label="Role" value={userRole ? userRole : 0} disabled={loading} onChange={(e) => setUserRole(e.target.value)}>
+                        <MenuItem value={0}>Regular user</MenuItem>
+                        <MenuItem value={999}>Admin</MenuItem>
+                    </Select>
 
                     <Stack direction="row" spacing={2}>
                         <Button variant="contained" color="primary" onClick={saveUser} disabled={loading}>

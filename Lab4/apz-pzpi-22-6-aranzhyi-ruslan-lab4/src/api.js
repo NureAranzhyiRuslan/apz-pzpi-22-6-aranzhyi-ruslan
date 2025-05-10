@@ -175,7 +175,7 @@ export async function apiAdminGetUser(token, userId, enqueueSnackbar) {
     return await parseResp(enqueueSnackbar, resp, "id", "email", "first_name", "last_name");
 }
 
-export async function apiAdminUpdateUser(token, userId, firstName, lastName, email, enqueueSnackbar) {
+export async function apiAdminUpdateUser(token, userId, firstName, lastName, email, role, enqueueSnackbar) {
     const resp = await fetch(`${API_BASE}/admin/users/${userId}`, {
         method: "PATCH",
         headers: {
@@ -186,6 +186,7 @@ export async function apiAdminUpdateUser(token, userId, firstName, lastName, ema
             "first_name": firstName,
             "last_name": lastName,
             "email": email,
+            "role": role,
         }),
     });
 
