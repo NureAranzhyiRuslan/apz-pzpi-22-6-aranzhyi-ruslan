@@ -315,3 +315,24 @@ export async function apiAdminCreateCity(token, name, latitude, longitude, enque
 
     return await parseResp(enqueueSnackbar, resp, "id", "name", "latitude", "longitude");
 }
+
+export async function apiAdminGetMeasurements(token, page, pageSize, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/measurements?page=${page}&page_size=${pageSize}`, {
+        headers: {
+            "Authorization": token,
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp, "count", "result");
+}
+
+export async function apiAdminDeleteMeasurement(token, measurementId, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/measurements/${measurementId}`, {
+        method: "DELETE",
+        headers: {
+            "Authorization": token,
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp);
+}

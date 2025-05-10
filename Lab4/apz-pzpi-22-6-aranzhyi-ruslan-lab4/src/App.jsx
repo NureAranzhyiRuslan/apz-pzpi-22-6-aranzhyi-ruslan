@@ -11,6 +11,7 @@ import {useAppStore} from "./state.js";
 import ForecastPage from "./pages/ForecastPage.jsx";
 import AdminCitiesPage from "./pages/admin/CitiesPage.jsx";
 import AdminCityInfoPage from "./pages/admin/CityInfoPage.jsx";
+import AdminMeasurementsPage from "./pages/admin/MeasurementsPage.jsx";
 
 function AuthGuard({component}) {
     const token = useAppStore(state => state.authToken);
@@ -51,6 +52,7 @@ function App() {
                 <Route path="/admin/cities/:cityId" element={<AuthGuard component={AdminCityInfoPage}/>}/>
                 <Route path="/admin/sensors" element={<AuthGuard component={AdminSensorsPage}/>}/>
                 <Route path="/admin/sensors/:sensorId" element={<AuthGuard component={AdminSensorInfoPage}/>}/>
+                <Route path="/admin/measurements" element={<AuthGuard component={AdminMeasurementsPage}/>}/>
 
                 <Route path="*" element={def}/>
             </Routes>
