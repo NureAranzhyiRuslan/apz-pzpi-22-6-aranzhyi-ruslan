@@ -1,5 +1,6 @@
 package com.rdev.nure.apz.components
 
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -30,7 +32,7 @@ private val dateFmt: DateFormat = SimpleDateFormat.getDateInstance()
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun WeatherForecastCarousel(vararg temps : Int?) {
+fun WeatherForecastCarousel(vararg temps : Int?, onLongClick: (() -> Unit)? = null) {
     val carouselState = rememberCarouselState { temps.size }
     var size by remember { mutableStateOf(0.dp) }
 
@@ -40,6 +42,13 @@ fun WeatherForecastCarousel(vararg temps : Int?) {
                 .padding(8.dp)
                 .fillMaxWidth()
                 .onSizeChanged { size = it.width.dp }
+                .pointerInput(Unit){
+                    detectTapGestures(
+                        onLongPress = {
+                            if(onLongClick != null) onLongClick()
+                        }
+                    )
+                }
         ) {
             HorizontalUncontainedCarousel(
                 state = carouselState,

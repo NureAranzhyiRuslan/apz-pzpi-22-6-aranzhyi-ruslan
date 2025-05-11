@@ -3,6 +3,7 @@ package com.rdev.nure.apz
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -101,6 +102,7 @@ private fun MainActivityComponent() {
     val context = LocalContext.current
     val prefs = context.getSharedPreferences("apz", Context.MODE_PRIVATE)
     val token = prefs.getString("authToken", null)!!
+    var forecastCity by remember { mutableLongStateOf(prefs.getLong("forecastCityId", 0L)) }
 
     var hasMore by remember { mutableStateOf(true) }
     var page by remember { mutableIntStateOf(1) }
@@ -115,6 +117,7 @@ private fun MainActivityComponent() {
     var tomorrowTemp by remember { mutableStateOf<Int?>(null) }
 
     val showCreateDialog = remember { mutableStateOf(false) }
+    val showChangeCityDialog = remember { mutableStateOf(false) }
     var showMenu by remember { mutableStateOf(false) }
 
     val needsReload by MainActivityState.needsReloadFlow.collectAsState()
@@ -159,18 +162,22 @@ private fun MainActivityComponent() {
         }
     }
 
-    LaunchedEffect(Unit) {
+    fun loadForecast() {
         coroutineScope.launch {
             handleResponse(
                 successResponse = { tomorrowTemp = it.temperature.toInt() },
-                errorResponse = { handleError(it.errors[0]) },
-                onHttpError = { handleError("Unknown error!") },
-                onNetworkError = { handleError("Network error!\nCheck your connection!") },
+                errorResponse = { tomorrowTemp = null; handleError(it.errors[0]) },
+                onHttpError = { tomorrowTemp = null; handleError("Unknown error!") },
+                onNetworkError = { tomorrowTemp = null; handleError("Network error!\nCheck your connection!") },
                 errorRet = { },
             ) {
-                forecastApi.getForecastForCity(1)  // TODO: select city
+                forecastApi.getForecastForCity(forecastCity)
             }
         }
+    }
+
+    LaunchedEffect(Unit) {
+        loadForecast()
     }
 
     fun resetSensorList() {
@@ -188,6 +195,16 @@ private fun MainActivityComponent() {
         CreateSensorDialog(
             show = showCreateDialog,
             onCreate = ::resetSensorList,
+        )
+
+    if(showChangeCityDialog.value)
+        ChangeForecastCityDialog(
+            currentCityId = forecastCity,
+            show = showChangeCityDialog,
+            onChange = {
+                forecastCity = prefs.getLong("forecastCityId", 0L)
+                loadForecast()
+            }
         )
 
     LaunchedEffect(needsReload) {
@@ -244,7 +261,10 @@ private fun MainActivityComponent() {
             Column(
                 modifier = Modifier.padding(innerPadding).fillMaxWidth()
             ) {
-                WeatherForecastCarousel(todayTemp, tomorrowTemp)
+                WeatherForecastCarousel(
+                    todayTemp, tomorrowTemp,
+                    onLongClick = { showChangeCityDialog.value = true }
+                )
 
                 Text(
                     text = (
