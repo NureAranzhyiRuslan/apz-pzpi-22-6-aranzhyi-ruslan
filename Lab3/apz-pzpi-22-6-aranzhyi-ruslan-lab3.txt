@@ -1,0 +1,153 @@
+МІНІСТЕРСТВО ОСВІТИ І НАУКИ УКРАЇНИ
+
+ХАРКІВСЬКИЙ НАЦІОНАЛЬНИЙ
+УНІВЕРСИТЕТ РАДІОЕЛЕКТРОНІКИ
+
+
+
+
+Лабораторна робота №3
+
+
+з дисципліни
+«Архітектура програмного забезпечення»
+
+
+
+
+
+
+
+
+
+
+
+Харків 2025
+
+1 ІСТОРІЯ ЗМІН
+Зміни звіту наведені у таблиці 1.1.
+Таблиця 1.1 - Історія змін
+№	Дата	Версія звіту	Опис змін
+1	10.05.2025	0.1	Створено розділ “Історія змін”
+2	10.05.2025	0.1	Створено розділ “Завдання”
+3	10.05.2025	0.1	Створено розділ “Опис виконаної роботи”
+4	10.05.2025	0.1	Створено розділ “Висновки”
+5	10.05.2025	0.1	Доданий Додаток А
+6	10.05.2025	0.1	Доданий Додаток Б
+7	10.05.2025	0.1	Доданий Додаток В
+
+
+2 ЗАВДАННЯ
+Необхідно розробити програмне забезпечення для IoT або SmartDevice пристрою, реалізованого на базі будь-якої поширеної на сьогодні платформи, придатної для реалізації вбудованих систем (Embedded System).
+Проаналізуйте завдання.
+Виконайте контрольні завдання.
+Відкрийте створений на попередній лабораторній роботі репозиторій GitHub.
+Створіть у репозиторії директорію Task3 та текстовий файл з описом інженерних рішень у цій частині проєкту, як вказано у додатку З
+Зафіксуйте кожну внесену зміну командою git commit з відповідним коментарем та фіксуйте цією командою усі наступні зміни у проєкті.
+Створіть у директорії Task3 піддиректорію для програмного коду, як вказано у додатку З
+Створіть програмний код, завантажте його у створену піддиректорію, зафіксуйте внесені у репозиторій зміни
+Виконайте функціональне тестування створеного програмного коду та створіть відеозапис цього тестування тривалістю 7..10 хвилин з усними поясненнями процесу тестування
+Завантажте створений відеозапис тестування YouTube канал для вашого облікового запису в домені @nure.ua
+Створіть для завантаженого запису його хронологічний опис.
+Оформіть звіт у форматі pdf та завантажте його на навчальну платформу https://dl.nure.ua/
+У коментарях до завантаженого звіту вкажіть посилання на відеозапис тестування у вашому каналі YouTube.
+
+
+3 ОПИС ВИКОНАНОЇ РОБОТИ
+Програмне забезпечення IoT клієнта розроблено на мові програмування C++ та з використанням бібліотек cpr для http-запитів та toml++ для роботи з налаштуванням пристрою. Програмне забезпечення отримує погодні вімири з джерела, вказаного у налаштуваннях, передає ці виміри на сервер та розраховує прогноз погоди.
+Бізнес-логікою є отримання погодних вімирів, їх передавання на сервер та частковий розрахунок прогнозу погоди.
+На рисунку Б.1 у додатку Б наведена UML діаграма прецедентів.
+На рисунку Б.2 у додатку Б наведена діаграма діяльності.
+На рисунку Б.3 у додатку Б наведена діаграма взаємодії.
+На рисунку Б.4 у додатку Б наведена діаграма компонентів.
+
+
+4 ВИСНОВКИ
+Під час виконання лабораторної роботи було розроблено програмне забезпечення для IoT або SmartDevice пристрою.
+
+
+Додаток А
+Посилання на відео та хронологічний опис
+
+Відеозапис доповіді на YouTube: https://youtu.be/...
+Хронологічний опис доповіді:
+00:00 Вступ
+...
+
+
+Додаток Б
+Графічні матеріали
+
+
+Рисунок Б.1 - UML діаграма прецедентів
+
+
+Рисунок Б.2 - Діаграма діяльності
+
+
+Рисунок Б.3 - Діаграма взаємодії
+
+
+Рисунок Б.4 - Діаграма компонентів
+
+
+Додаток В
+Програмний код
+
+В.1 Математична обробка прикладних даних
+GitHub репозиторій: https://github.com/NureAranzhyiRuslan/apz-pzpi-22-6-aranzhyi-ruslan/blob/main/Lab3/apz-pzpi-22-6-aranzhyi-ruslan-lab3/src/iot_sensor.cpp#L76.
+
+     1	trend_pressure = last_measurements[0].pressure - last_measurements[2].pressure;
+     2	altitude = this->altitude * THERMAL_GRADIENT_PER_METER;
+     3	pressure_at_sea_level = last_measurements[0].pressure * std::pow(
+     4	    1 - altitude / (last_measurements[0].temperature + altitude - ZERO_KELVIN), -5.257);
+     5	
+     6	std::cout << "Pressure is ";
+     7	if (trend_pressure > 0.5) {
+     8	    std::cout << "rising";
+     9	    zambretti_index = 179 - 20 * pressure_at_sea_level / 129;
+    10	} else if (trend_pressure < -0.5) {
+    11	    std::cout << "falling";
+    12	    zambretti_index = 130 - 10 * pressure_at_sea_level / 81;
+    13	} else {
+    14	    std::cout << "steady";
+    15	    zambretti_index = 147 - 50 * pressure_at_sea_level / 376;
+    16	}
+    17	
+    18	std::cout << ", prediction is \"";
+    19	
+    20	switch(zambretti_index) {
+    21	    case 1: { std::cout << "Settled Fine"; break; }
+    22	    case 2: { std::cout << "Fine Weather"; break; }
+    23	    case 3: { std::cout << "Fine, Becoming Less Settled"; break; }
+    24	    case 4: { std::cout << "Fairly Fine, Showery Later"; break; }
+    25	    case 5: { std::cout << "Showery, Becoming More Unsettled"; break; }
+    26	    case 6: { std::cout << "Unsettled, Rain Later"; break; }
+    27	    case 7: { std::cout << "Rain at Times, Worse Later"; break; }
+    28	    case 8: { std::cout << "Rain at Times, Becoming Very Unsettled"; break; }
+    29	    case 9: { std::cout << "Very Unsettled, Rain"; break; }
+    30	    case 10: { std::cout << "Settled Fine"; break; }
+    31	    case 11: { std::cout << "Fine Weather"; break; }
+    32	    case 12: { std::cout << "Fine, Possibly Showers"; break; }
+    33	    case 13: { std::cout << "Fairly Fine, Showers Likely"; break; }
+    34	    case 14: { std::cout << "Showery, Bright Intervals"; break; }
+    35	    case 15: { std::cout << "Changeable, Some Rain"; break; }
+    36	    case 16: { std::cout << "Unsettled, Rain at Times"; break; }
+    37	    case 17: { std::cout << "Rain at Frequent Intervals"; break; }
+    38	    case 18: { std::cout << "Very Unsettled, Rain"; break; }
+    39	    case 19: { std::cout << "Stormy, Much Rain"; break; }
+    40	    case 20: { std::cout << "Settled Fine"; break; }
+    41	    case 21: { std::cout << "Fine Weather"; break; }
+    42	    case 22: { std::cout << "Becoming Fine"; break; }
+    43	    case 23: { std::cout << "Fairly Fine, Improving"; break; }
+    44	    case 24: { std::cout << "Fairly Fine, Possibly Showers Early"; break; }
+    45	    case 25: { std::cout << "Showery Early, Improving"; break; }
+    46	    case 26: { std::cout << "Changeable, Mending"; break; }
+    47	    case 27: { std::cout << "Rather Unsettled, Clearing Later"; break; }
+    48	    case 28: { std::cout << "Unsettled, Probably Improving"; break; }
+    49	    case 29: { std::cout << "Unsettled, Short Fine Intervals"; break; }
+    50	    case 30: { std::cout << "Very Unsettled, Finer at Times"; break; }
+    51	    case 31: { std::cout << "Stormy, Possibly Improving"; break; }
+    52	    case 32: { std::cout << "Stormy, Much Rain"; break; }
+    53	    default: { std::cout << "Unknown"; break; }
+    54	}
