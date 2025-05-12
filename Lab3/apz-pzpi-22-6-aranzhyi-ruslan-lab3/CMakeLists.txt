@@ -9,6 +9,8 @@ find_package(tomlplusplus REQUIRED)
 add_executable(atark_iot
         src/measurement_source.cpp
         src/iot_sensor.cpp
+        src/configuration.cpp
+        src/sources/csv.cpp
         src/main.cpp)
 target_include_directories(atark_iot PRIVATE include)
 target_link_libraries(atark_iot cpr)

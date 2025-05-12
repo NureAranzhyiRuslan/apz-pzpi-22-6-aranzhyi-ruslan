@@ -1,54 +1,36 @@
 #include <iostream>
+#include <utility>
 #include <cpr/cpr.h>
 
 #include "iot_sensor.h"
+
+#include <configuration.h>
 
 
 constexpr double THERMAL_GRADIENT_PER_METER = 0.0065;
 constexpr double ZERO_KELVIN = -273.15;
 
 
-IotSensor::IotSensor(const toml::table& config) {
-    const auto api_host = config["server"]["host"].value<std::string>();
-    if (!api_host) {
-        throw std::runtime_error("Failed to initialize: \"host\" under \"[server]\" is not specified!");
-    }
-    this->api_host = api_host.value();
+IotSensor::IotSensor(const toml::table& toml_config, Configuration config) {
+    this->config = std::move(config);
 
-    const auto api_key = config["server"]["api_key"].value<std::string>();
-    if (!api_key) {
-        throw std::runtime_error("Failed to initialize: \"api_key\" under \"[server]\" is not specified!");
-    }
-    this->api_key = api_key.value();
-
-    const auto measurement_interval = config["sensor"]["measurement_interval"].value<uint32_t>();
-    if (!measurement_interval) {
-        throw std::runtime_error(
-            "Failed to initialize: \"measurement_interval\" under \"[sensor]\" is not specified!");
-    }
-    this->measurement_interval = measurement_interval.value();
-
-    const auto altitude = config["sensor"]["altitude"].value<uint16_t>();
-    if (!altitude) {
-        throw std::runtime_error(
-            "Failed to initialize: \"altitude\" under \"[sensor]\" is not specified!");
-    }
-    this->altitude = altitude.value();
-
-    this->source = MeasurementSource::createSource(config);
+    this->source = MeasurementSource::createSource(toml_config);
     if (this->source == nullptr) {
         throw std::runtime_error("Failed to create measurements source!");
     }
 
-    this->measurements_count = config["sensor"]["measurement_count"].value_or<uint16_t>(32);
-    this->last_measurements = new Measurement[this->measurements_count];
+    this->last_measurements = new Measurement[config.getMeasurementCount()];
 
-    for (int i = 0; i < measurements_count; ++i) {
+    for (int i = 0; i < config.getMeasurementCount(); ++i) {
         this->last_measurements[i].temperature = this->last_measurements[i].pressure = 0;
     }
 }
 
 void IotSensor::run() {
+    const uint16_t measurements_count = config.getMeasurementCount();
+    const uint16_t altitude_ = config.getAltitude();
+    const uint32_t interval = config.getMeasurementInterval();
+
     while (true) {
         const Measurement ms = this->source->getMeasurement();
         sendData(ms);
@@ -65,8 +47,6 @@ void IotSensor::run() {
         double altitude;
         double pressure_at_sea_level;
         uint16_t zambretti_index;
-        time_t time_u;
-        tm* time_s;
 
         if(valid_measurements_count < 3) {
             std::cout << "Insufficient data to make simple forecast.\n";
@@ -74,7 +54,7 @@ void IotSensor::run() {
         }
 
         trend_pressure = last_measurements[0].pressure - last_measurements[2].pressure;
-        altitude = this->altitude * THERMAL_GRADIENT_PER_METER;
+        altitude = altitude_ * THERMAL_GRADIENT_PER_METER;
         pressure_at_sea_level = last_measurements[0].pressure * std::pow(
             1 - altitude / (last_measurements[0].temperature + altitude - ZERO_KELVIN), -5.257);
 
@@ -91,15 +71,6 @@ void IotSensor::run() {
         }
 
         std::cout << ", prediction is \"";
-
-        time_u = time(nullptr);
-        time_s = localtime(&time_u);
-
-        /*if(trend_pressure < -0.5 && (time_s->tm_mon == 11 || time_s->tm_mon == 0 || time_s->tm_mon == 1)) {
-            --zambretti_index;
-        } else if(trend_pressure > 0.5 && (time_s->tm_mon == 5 || time_s->tm_mon == 6 || time_s->tm_mon == 7)) {
-            ++zambretti_index;
-        }*/
 
         switch(zambretti_index) {
             case 1: { std::cout << "Settled Fine"; break; }
@@ -140,19 +111,19 @@ void IotSensor::run() {
         std::cout << "\"\n";
 
 loop_end:
-        sleep(measurement_interval);
+        sleep(interval);
     }
 }
 
 void IotSensor::sendData(Measurement measurement) {
-    cpr::Response resp = cpr::Post(cpr::Url{api_host + "/measurements"},
-                                   cpr::Header{{"Authorization", api_key}},
+    cpr::Response resp = cpr::Post(cpr::Url{config.getApiHost() + "/measurements"},
+                                   cpr::Header{{"Authorization", config.getApiKey()}},
                                    cpr::Body{
                                        std::format("{{ \"temperature\": {:.2f}, \"pressure\": {:.2f} }}",
                                                    measurement.temperature, measurement.pressure)
                                    },
                                    cpr::Header{{"Content-Type", "application/json"}});
-    if (resp.status_code != 200) {
+    if (resp.status_code == 0 || resp.status_code >= 400) {
         std::cerr << std::format("Failed to send data: {} - {}\n", resp.status_code, resp.text);
     } else {
         std::cout << "Data sent successfully.\n";

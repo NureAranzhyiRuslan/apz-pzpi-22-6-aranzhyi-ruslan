@@ -1,25 +1,20 @@
 #pragma once
 
-#include <string>
 #include <toml++/toml.hpp>
 
 #include "measurement_source.h"
+#include "configuration.h"
 
 class IotSensor {
 public:
-    explicit IotSensor(const toml::table& config);
+    IotSensor(const toml::table& toml_config, Configuration config);
 
     void run();
 
 private:
-    std::string api_host;
-    std::string api_key;
-    uint32_t measurement_interval;
-
+    Configuration config;
     MeasurementSource* source;
-    uint16_t measurements_count;
     Measurement* last_measurements;
-    uint16_t altitude;
 
     void sendData(Measurement measurement);
 };
