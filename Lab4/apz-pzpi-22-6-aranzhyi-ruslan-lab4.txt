@@ -100,7 +100,7 @@
 Програмний код
 
 В.1 Математична обробка прикладних даних
-GitHub репозиторій: https://github.com/ArRuslan/apz-mobile/blob/master/app/src/main/java/com/rdev/nure/apz/components/WeatherForecastCarousel.kt.
+GitHub репозиторій: https://github.com/NureAranzhyiRuslan/apz-pzpi-22-6-aranzhyi-ruslan/blob/main/Lab4/apz-pzpi-22-6-aranzhyi-ruslan-lab4/app/src/main/java/com/rdev/nure/apz/components/WeatherForecastCarousel.kt
 
      1	package com.rdev.nure.apz.components
      2	
