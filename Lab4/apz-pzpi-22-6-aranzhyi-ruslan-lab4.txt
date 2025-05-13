@@ -94,3 +94,99 @@
 
 
 Рисунок Б.4 - Діаграма станів
+
+
+Додаток В
+Програмний код
+
+В.1 Математична обробка прикладних даних
+GitHub репозиторій: https://github.com/ArRuslan/apz-mobile/blob/master/app/src/main/java/com/rdev/nure/apz/components/WeatherForecastCarousel.kt.
+
+     1	package com.rdev.nure.apz.components
+     2	
+     3	import androidx.compose.foundation.gestures.detectTapGestures
+     4	import androidx.compose.foundation.layout.Box
+     5	import androidx.compose.foundation.layout.Column
+     6	import androidx.compose.foundation.layout.fillMaxWidth
+     7	import androidx.compose.foundation.layout.padding
+     8	import androidx.compose.material3.ExperimentalMaterial3Api
+     9	import androidx.compose.material3.HorizontalDivider
+    10	import androidx.compose.material3.Text
+    11	import androidx.compose.material3.carousel.CarouselDefaults
+    12	import androidx.compose.material3.carousel.HorizontalUncontainedCarousel
+    13	import androidx.compose.material3.carousel.rememberCarouselState
+    14	import androidx.compose.runtime.Composable
+    15	import androidx.compose.runtime.getValue
+    16	import androidx.compose.runtime.mutableStateOf
+    17	import androidx.compose.runtime.remember
+    18	import androidx.compose.runtime.setValue
+    19	import androidx.compose.ui.Alignment
+    20	import androidx.compose.ui.Modifier
+    21	import androidx.compose.ui.input.pointer.pointerInput
+    22	import androidx.compose.ui.layout.onSizeChanged
+    23	import androidx.compose.ui.tooling.preview.Preview
+    24	import androidx.compose.ui.unit.dp
+    25	import androidx.compose.ui.unit.sp
+    26	import com.rdev.nure.apz.ui.theme.ApzTheme
+    27	import java.text.DateFormat
+    28	import java.text.SimpleDateFormat
+    29	import java.util.Calendar
+    30	
+    31	private val dateFmt: DateFormat = SimpleDateFormat.getDateInstance()
+    32	
+    33	@OptIn(ExperimentalMaterial3Api::class)
+    34	@Composable
+    35	fun WeatherForecastCarousel(vararg temps : Int?, onLongClick: (() -> Unit)? = null) {
+    36	    val carouselState = rememberCarouselState { temps.size }
+    37	    var size by remember { mutableStateOf(0.dp) }
+    38	
+    39	    Column {
+    40	        Box(
+    41	            modifier = Modifier
+    42	                .padding(8.dp)
+    43	                .fillMaxWidth()
+    44	                .onSizeChanged { size = it.width.dp }
+    45	                .pointerInput(Unit){
+    46	                    detectTapGestures(
+    47	                        onLongPress = {
+    48	                            if(onLongClick != null) onLongClick()
+    49	                        }
+    50	                    )
+    51	                }
+    52	        ) {
+    53	            HorizontalUncontainedCarousel(
+    54	                state = carouselState,
+    55	                itemWidth = size,
+    56	                flingBehavior = CarouselDefaults.singleAdvanceFlingBehavior(carouselState)
+    57	            ) { index ->
+    58	                val forecastTemp = temps[index]?.toString() ?: "?"
+    59	
+    60	                Column(
+    61	                    modifier = Modifier.fillMaxWidth(),
+    62	                    horizontalAlignment = Alignment.CenterHorizontally
+    63	                ) {
+    64	                    val calendar = Calendar.getInstance()
+    65	                    calendar.add(Calendar.DATE, index)
+    66	
+    67	                    Text(
+    68	                        text = "$forecastTemp °C",
+    69	                        fontSize = 28.sp,
+    70	                    )
+    71	                    Text(
+    72	                        text = dateFmt.format(calendar.time),
+    73	                        fontSize = 20.sp,
+    74	                    )
+    75	                    HorizontalDivider()
+    76	                }
+    77	            }
+    78	        }
+    79	    }
+    80	}
+    81	
+    82	@Preview(showBackground = true)
+    83	@Composable
+    84	fun WeatherForecastCarouselPreview() {
+    85	    ApzTheme {
+    86	        WeatherForecastCarousel(15, 20)
+    87	    }
+    88	}
