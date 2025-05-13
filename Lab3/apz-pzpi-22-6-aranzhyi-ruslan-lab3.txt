@@ -99,3 +99,235 @@
 
 Рисунок Б.4 - Діаграма станів
 
+
+Додаток В
+Програмний код
+
+В.1 Математична обробка прикладних даних
+GitHub репозиторій: https://github.com/ArRuslan/apz-frontend/blob/master/src/pages/SensorInfoPage.jsx.
+
+     1	import React, {useEffect, useState} from "react";
+     2	import {Autocomplete, Box, Button, List, Paper, Stack, TextField} from "@mui/material";
+     3	import {useNavigate, useParams} from "react-router-dom";
+     4	import {LineChart} from "@mui/x-charts";
+     5	import Measurement from "../components/Measurement.jsx";
+     6	import Navigation from "../components/Navigation.jsx";
+     7	import {useAppStore} from "../state.js";
+     8	import {useSnackbar} from "notistack";
+     9	import {apiDeleteSensor, apiGetSensor, apiGetSensorMeasurements, apiSearchCities, apiUpdateSensor} from "../api.js";
+    10	
+    11	function SensorInfoPage() {
+    12	    const token = useAppStore(state => state.authToken);
+    13	
+    14	    const { sensorId } = useParams();
+    15	    const [sensor, setSensor] = useState(null);
+    16	    const [sensorName, setSensorName] = useState(null);
+    17	    const [sensorCity, setSensorCity] = useState(null);
+    18	    const [loading, setLoading] = useState(false);
+    19	    const [measurements, setMeasurements] = useState([]);
+    20	
+    21	    const [cityOptions, setCityOptions] = useState([]);
+    22	
+    23	    const navigate = useNavigate();
+    24	    const { enqueueSnackbar } = useSnackbar();
+    25	
+    26	    const handleCitySearch = async (query) => {
+    27	        const cities = await apiSearchCities(query.toLowerCase());
+    28	        if(!cities) return;
+    29	        setCityOptions(cities);
+    30	    };
+    31	
+    32	    const saveSensor = async () => {
+    33	        const updSensor = await apiUpdateSensor(token, sensor.id, sensorName, sensorCity.id, enqueueSnackbar);
+    34	        if(!updSensor) return;
+    35	        setSensor(updSensor);
+    36	        enqueueSnackbar("Sensor updated!", {variant: "info"});
+    37	    };
+    38	
+    39	    const deleteSensor = async () => {
+    40	        if(await apiDeleteSensor(token, sensor.id, enqueueSnackbar)) {
+    41	            enqueueSnackbar("Sensor deleted!", {variant: "success"});
+    42	            navigate("/sensors");
+    43	        }
+    44	    };
+    45	
+    46	    useEffect(() => {
+    47	        (async () => {
+    48	            setLoading(true);
+    49	            const sensorInfo = await apiGetSensor(token, sensorId, enqueueSnackbar);
+    50	            if(!sensorInfo) return;
+    51	            setSensor(sensorInfo);
+    52	            setSensorName(sensorInfo.name);
+    53	            setSensorCity(sensorInfo.city);
+    54	
+    55	            const sensorMeasurements = await apiGetSensorMeasurements(token, sensorId, enqueueSnackbar);
+    56	            if(!sensorMeasurements) return;
+    57	            setMeasurements(sensorMeasurements);
+    58	
+    59	            setLoading(false)
+    60	        })();
+    61	    }, [sensorId]);
+    62	
+    63	    return (
+    64	        <>
+    65	            <Navigation title={`Sensor ${sensor?.name || "..."} (ID: ${sensorId})`}/>
+    66	
+    67	            <Box p={3}>
+    68	                <Stack direction="column" spacing={2}>
+    69	                    <TextField label="Api Key" value={sensor ? sensor.secret_key : ""} disabled />
+    70	                    <TextField label="Name" value={sensorName ? sensorName : ""} disabled={loading} onChange={(e) => setSensorName(e.target.value)}/>
+    71	                    <Autocomplete
+    72	                        options={cityOptions}
+    73	                        getOptionLabel={(option) => option.name}
+    74	                        value={sensorCity}
+    75	                        onInputChange={(e, value) => handleCitySearch(value)}
+    76	                        onChange={(e, value) => setSensorCity(value)}
+    77	                        renderInput={(params) => <TextField {...params} label="City" />}
+    78	                        disabled={loading}
+    79	                    />
+    80	
+    81	                    <Stack direction="row" spacing={2}>
+    82	                        <Button variant="contained" color="primary" onClick={saveSensor} disabled={loading}>
+    83	                            Save
+    84	                        </Button>
+    85	                        <Button variant="outlined" color="error" onClick={deleteSensor} disabled={loading}>
+    86	                            Delete Sensor
+    87	                        </Button>
+    88	                    </Stack>
+    89	                </Stack>
+    90	
+    91	                <LineChart
+    92	                    xAxis={[{
+    93	                        data: measurements.map(measurement => measurement.timestamp),
+    94	                        valueFormatter: value => new Date(value * 1000).toLocaleString(),
+    95	                    }]}
+    96	                    series={[{
+    97	                        data: measurements.map(measurement => measurement.temperature),
+    98	                        valueFormatter: value => `${value}°C`,
+    99	                    }]}
+   100	                    height={300}
+   101	                />
+   102	
+   103	                <Paper elevation={2}>
+   104	                    <List>
+   105	                        {measurements.map(m => <Measurement measurement={m}/>)}
+   106	                    </List>
+   107	                </Paper>
+   108	            </Box>
+   109	        </>
+   110	    );
+   111	}
+   112	
+   113	export default SensorInfoPage;
+
+В.2 Адміністрування бізнес-логіки системи
+GitHub репозиторій: https://github.com/ArRuslan/apz-frontend/blob/master/src/pages/admin/UsersPage.jsx.
+
+     1	import React, {useEffect, useState} from "react";
+     2	import {
+     3	    Box,
+     4	    CircularProgress,
+     5	    Paper,
+     6	    Table,
+     7	    TableBody,
+     8	    TableCell,
+     9	    TableHead,
+    10	    TablePagination,
+    11	    TableRow,
+    12	} from "@mui/material";
+    13	import UsersTableItem from "../../components/admin/UsersTableItem.jsx";
+    14	import CenteredTableRow from "../../components/CenteredTableRow.jsx";
+    15	import Navigation from "../../components/Navigation.jsx";
+    16	import {apiAdminGetUsers} from "../../api.js";
+    17	import {useAppStore} from "../../state.js";
+    18	import {useSnackbar} from "notistack";
+    19	
+    20	
+    21	function AdminUsersPage() {
+    22	    const token = useAppStore(state => state.authToken);
+    23	
+    24	    const [users, setUsers] = useState([]);
+    25	    const [usersCount, setUsersCount] = useState(0);
+    26	
+    27	    const [page, setPage] = useState(0);
+    28	    const [rowsPerPage, setRowsPerPage] = useState(5);
+    29	    const [loading, setLoading] = useState(false);
+    30	
+    31	    const { enqueueSnackbar } = useSnackbar();
+    32	
+    33	    const fetchUsers = async () => {
+    34	        setLoading(true);
+    35	
+    36	        const usersResp = await apiAdminGetUsers(token, page + 1, rowsPerPage, enqueueSnackbar);
+    37	        if(!usersResp) return setLoading(false);
+    38	
+    39	        setUsers(usersResp.result);
+    40	        setUsersCount(usersResp.count);
+    41	        setLoading(false);
+    42	    }
+    43	
+    44	    useEffect(() => {
+    45	        fetchUsers();
+    46	    }, [page, rowsPerPage]);
+    47	
+    48	    const handleChangePage = (event, newPage) => {
+    49	        setPage(newPage);
+    50	    };
+    51	
+    52	    const handleChangeRowsPerPage = (event) => {
+    53	        setRowsPerPage(parseInt(event.target.value, 10));
+    54	        setPage(0);
+    55	    };
+    56	
+    57	    return (
+    58	        <>
+    59	            <Navigation title="Users"/>
+    60	
+    61	            <Box p={3}>
+    62	                <Paper>
+    63	                    <Table>
+    64	                        <TableHead>
+    65	                            <TableRow>
+    66	                                <TableCell>ID</TableCell>
+    67	                                <TableCell>First Name</TableCell>
+    68	                                <TableCell>Last Name</TableCell>
+    69	                                <TableCell>Email</TableCell>
+    70	                                <TableCell align="right">Actions</TableCell>
+    71	                            </TableRow>
+    72	                        </TableHead>
+    73	                        <TableBody>
+    74	                            {
+    75	                                loading
+    76	                                    ? (
+    77	                                        <CenteredTableRow>
+    78	                                            <CircularProgress/>
+    79	                                        </CenteredTableRow>
+    80	                                    )
+    81	                                    : users.map(user => <UsersTableItem user={user}/>)
+    82	                            }
+    83	
+    84	                            {!loading && users.length === 0 && (
+    85	                                <CenteredTableRow>
+    86	                                    No users found.
+    87	                                </CenteredTableRow>
+    88	                            )}
+    89	                        </TableBody>
+    90	                    </Table>
+    91	
+    92	                    <TablePagination
+    93	                        component="div"
+    94	                        count={usersCount}
+    95	                        page={page}
+    96	                        onPageChange={handleChangePage}
+    97	                        rowsPerPage={rowsPerPage}
+    98	                        onRowsPerPageChange={handleChangeRowsPerPage}
+    99	                        rowsPerPageOptions={[5, 10, 25, 50]}
+   100	                        disabled={loading}
+   101	                    />
+   102	                </Paper>
+   103	            </Box>
+   104	        </>
+   105	    );
+   106	}
+   107	
+   108	export default AdminUsersPage;
