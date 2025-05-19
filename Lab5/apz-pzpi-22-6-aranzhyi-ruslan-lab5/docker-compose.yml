@@ -1,0 +1,60 @@
+version: '3'
+
+services:
+  mariadb:
+    image: mariadb:10.6
+    networks: ['idk']
+    volumes: ['mariadb_data:/var/lib/mysql']
+    environment:
+      - MARIADB_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MARIADB_DATABASE=idk
+      - MARIADB_USER=${MYSQL_USER}
+      - MARIADB_PASSWORD=${MYSQL_PASSWORD}
+    restart: unless-stopped
+    healthcheck:
+      test: mysqladmin ping -h localhost
+      start_period: 10s
+      interval: 10s
+      timeout: 5s
+      retries: 5
+  idk:
+    build: .
+    pull_policy: build
+    ports:
+      - '0.0.0.0:8000:8000'
+    networks: ['idk']
+    volumes: ['idk_data:/idk/data']
+    environment:
+      - DB_CONNECTION_STRING=mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mariadb/idk
+      - JWT_KEY=${JWT_KEY}
+    depends_on:
+      - mariadb
+    restart: unless-stopped
+  mariadb-backups:
+    image: databack/mysql-backup
+    command: dump
+    networks: ['idk']
+    volumes: ['mariadb_backups:/backups']
+    environment:
+      - DB_BACKUP_FREQUENCY=3
+      - DB_DUMP_TARGET=/backups
+      - DB_SERVER=mariadb
+      - DB_PORT=3306
+      - DB_USER=root
+      - DB_PASS=${MYSQL_ROOT_PASSWORD}
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    restart: unless-stopped
+
+networks:
+  idk:
+    driver: bridge
+
+volumes:
+  mariadb_data:
+    driver: local
+  mariadb_backups:
+    driver: local
+  idk_data:
+    driver: local
