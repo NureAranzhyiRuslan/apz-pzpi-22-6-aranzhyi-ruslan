@@ -12,3 +12,9 @@ async def search_city(data: CitySearchRequest):
         city.to_json()
         for city in cities
     ]
+
+
+@router.get("/{city_id}", response_model=CityInfoResponse)
+async def get_city(city_id: int):
+    city = await City.get_or_none(id=city_id)
+    return city.to_json()
