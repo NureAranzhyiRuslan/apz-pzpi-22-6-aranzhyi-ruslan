@@ -52,30 +52,7 @@
 
 
 3 ОПИС ВИКОНАНОЇ РОБОТИ
-Серверна частина програмної системи написана на мові програмування Python та використовує фреймворк FastAPI.
-Для зберігання даних використовується база даних MariaDB. Для доступу до бази даних використовується Tortoise-ORM. Міграції та оновлення бази даних створюються автоматично за домомогою програми Aerich.
-Для керування версіями коду використовується система контролю версій Git, весь код програмної системи доступний у репозиторії за посиланням: https://github.com/NureAranzhyiRuslan/apz-pzpi-22-6-aranzhyi-ruslan.
-Для розгортки серверної частини програмної системи використовується технологія контейнеризації docker та інструмент docker compose.
-Для резервного копіювання бази даних використовується інструмент mysql-backup, який запущено у Docker.
-Доступ до серверної частини через домен налаштовано за домопогою nginx.
-Оскільки програмна система доступна у вигляді докер-образу та конфігурації docker compose, Її можно розгорнути будь-де, де підтримуються технології контейнеризації, сумісні з docker. Для розгортки потрібно:
-1.Завантажити гіт-репозиторій:
-git clone git@github.com:ArRuslan/apz-backend.git
-2.Перейти у директорію репозиторію:
-cd atark-backend
-3.Переіменувати файл з налаштуваннями розгортки:
-mv .env.example .env
-4.Відкрити та відредагувати файл конфігурації розгортки за допомогою будь-якого текстового редактору:
-nano .env
-5.Виконати розгортку:
-docker compose up -d
-Після цього сервера частина будет доступна за адресою 127.0.0.1:8000.
-6.Далі потрібно налаштувати nginx, для цього потрібно створити нову конфігурацію серверу у директорії /etc/nginx/sites-enabled, та вказати, що трафік буде направлений на запущений веб-сервер за допомогою 
-location / {
-proxy_pass http://127.0.0.1:8000;
-}
-Резервні копії створюються автоматично у docker-volume під назвою apz-backend_mariadb-backup. Отримати путь до резервних копій можна за домогою команди
-docker volume inspect --format '{{ .Mountpoint }}' apz-backend_mariadb-backup
+TODO
 
 
 4 ВИСНОВКИ
@@ -85,85 +62,13 @@ docker volume inspect --format '{{ .Mountpoint }}' apz-backend_mariadb-backup
 Додаток А
 Посилання на відео та хронологічний опис
 
-Відеозапис доповіді на YouTube: https://youtu.be/30PJd76gkwU
+Відеозапис доповіді на YouTube TODO: https://youtu.be/...
 Хронологічний опис доповіді:
 00:00 Вступ
-00:17 Клонування репозиторію
-00:37 Редагування конфігурації .env
-01:12 Збір докер образу
-01:33 Запуск docker compose
-01:47 Запуск docker compose у фонофому режимі
-02:12 Конфігурація nginx
-02:47 Налаштування сертифікатів
-04:02 Перевірка розгортання бекенд частини
-04:19 Розгортання веб частини за допомогою Cloudflare Pages
-05:02 Перевірка розгортання фронтендчастини
-05:31 Резервне копіювання
+... TODO
 
 
 Додаток Б
 Програмний код
 
-Б.1 Конфігурація Docker Compose
-GitHub репозиторій: https://github.com/NureAranzhyiRuslan/apz-pzpi-22-6-aranzhyi-ruslan/blob/main/Lab2/apz-pzpi-22-6-aranzhyi-ruslan-lab2/docker-compose.yml.
-
-     1	version: '3'
-     2	
-     3	services:
-     4	  mariadb:
-     5	    image: mariadb:10.6
-     6	    networks: ['idk']
-     7	    volumes: ['mariadb_data:/var/lib/mysql']
-     8	    environment:
-     9	      - MARIADB_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
-    10	      - MARIADB_DATABASE=idk
-    11	      - MARIADB_USER=${MYSQL_USER}
-    12	      - MARIADB_PASSWORD=${MYSQL_PASSWORD}
-    13	    restart: unless-stopped
-    14	    healthcheck:
-    15	      test: mysqladmin ping -h localhost
-    16	      start_period: 10s
-    17	      interval: 10s
-    18	      timeout: 5s
-    19	      retries: 5
-    20	  idk:
-    21	    build: .
-    22	    pull_policy: build
-    23	    ports:
-    24	      - '0.0.0.0:8000:8000'
-    25	    networks: ['idk']
-    26	    volumes: ['idk_data:/idk/data']
-    27	    environment:
-    28	      - DB_CONNECTION_STRING=mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@mariadb/idk
-    29	      - JWT_KEY=${JWT_KEY}
-    30	    depends_on:
-    31	      - mariadb
-    32	    restart: unless-stopped
-    33	  mariadb-backups:
-    34	    image: databack/mysql-backup
-    35	    command: dump
-    36	    networks: ['idk']
-    37	    volumes: ['mariadb_backups:/backups']
-    38	    environment:
-    39	      - DB_BACKUP_FREQUENCY=3
-    40	      - DB_DUMP_TARGET=/backups
-    41	      - DB_SERVER=mariadb
-    42	      - DB_PORT=3306
-    43	      - DB_USER=root
-    44	      - DB_PASS=${MYSQL_ROOT_PASSWORD}
-    45	    depends_on:
-    46	      mariadb:
-    47	        condition: service_healthy
-    48	    restart: unless-stopped
-    49	
-    50	networks:
-    51	  idk:
-    52	    driver: bridge
-    53	
-    54	volumes:
-    55	  mariadb_data:
-    56	    driver: local
-    57	  mariadb_backups:
-    58	    driver: local
-    59	  idk_data:
-    60	    driver: local
+TODO?
