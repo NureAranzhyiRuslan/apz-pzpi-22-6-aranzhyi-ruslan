@@ -1,3 +1,4 @@
+import { saveAs } from "file-saver";
 import {API_BASE} from "./constants.js";
 
 async function parseResp(enqueueSnackbar, resp, ...successFields) {
@@ -328,6 +329,59 @@ export async function apiAdminGetMeasurements(token, page, pageSize, enqueueSnac
 
 export async function apiAdminDeleteMeasurement(token, measurementId, enqueueSnackbar) {
     const resp = await fetch(`${API_BASE}/admin/measurements/${measurementId}`, {
+        method: "DELETE",
+        headers: {
+            "Authorization": token,
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp);
+}
+
+export async function apiAdminGetBackups(token, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/backups`, {
+        headers: {
+            "Authorization": token,
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp);
+}
+
+export async function apiAdminDownloadBackup(token, backupName, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/backups/${backupName}`, {
+        headers: {
+            "Authorization": token,
+        },
+    });
+
+    if(resp.status >= 400) {
+        const json = await resp.json();
+        if ("errors" in json)
+            enqueueSnackbar(json.errors[0], {variant: "error"});
+        else
+            enqueueSnackbar("Unknown server response!", {variant: "error"});
+        return;
+    }
+
+    const blob = await resp.blob();
+    saveAs(blob, backupName);
+}
+
+export async function apiAdminCreateBackup(token, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/backups`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            "Authorization": token,
+        },
+    });
+
+    return await parseResp(enqueueSnackbar, resp);
+}
+
+export async function apiAdminDeleteBackup(token, backupName, enqueueSnackbar) {
+    const resp = await fetch(`${API_BASE}/admin/backups/${backupName}`, {
         method: "DELETE",
         headers: {
             "Authorization": token,
