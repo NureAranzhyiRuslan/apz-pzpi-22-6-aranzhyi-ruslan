@@ -7,3 +7,6 @@ DB_CONNECTION_STRING = environ.get("DB_CONNECTION_STRING", "sqlite://noidea.db")
 JWT_KEY = b64decode(environ["JWT_KEY"]) if "JWT_KEY" in environ else urandom(32)
 AUTH_JWT_TTL = 86400 * (7 if IS_DEBUG else 1)
 BCRYPT_ROUNDS = 5 if IS_DEBUG else 13
+BACKUPS_DIR = environ.get("BACKUPS_DIR", "./data/backups")
+BACKUP_CONTAINER_NAME = environ.get("BACKUP_CONTAINER_NAME", "mariadb-backups")
+DOCKER_SOCKET = environ.get("DOCKER_SOCKET", None)

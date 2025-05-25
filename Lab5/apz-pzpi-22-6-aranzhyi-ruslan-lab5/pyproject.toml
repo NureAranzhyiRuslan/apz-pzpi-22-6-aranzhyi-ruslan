@@ -14,6 +14,7 @@ uvicorn = "^0.32.0"
 tortoise-orm = {extras = ["aiosqlite", "asyncmy", "accel"], version = "^0.21.7"}
 aerich = "^0.7.2"
 bcrypt = "^4.2.0"
+aiodocker = "^0.24.0"
 
 
 [tool.poetry.group.dev.dependencies]
