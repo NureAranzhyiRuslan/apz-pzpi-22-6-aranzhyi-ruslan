@@ -87,7 +87,7 @@ docker volume inspect --format '{{ .Mountpoint }}' apz-backend_mariadb-backup
 Додаток А
 Посилання на відео та хронологічний опис
 
-Відеозапис доповіді на YouTube TODO: https://youtu.be/2RwOZi00Pn8
+Відеозапис доповіді на YouTube: https://youtu.be/2RwOZi00Pn8
 Хронологічний опис доповіді:
 00:00 Вступ
 00:00 Вступ
